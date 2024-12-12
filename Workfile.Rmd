@@ -14,5 +14,39 @@ neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv
 city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv")
 city_data <- read.csv("data/airbnb_italy_city.csv")
 region_data <- read.csv("data/airbnb_italy_region.csv")
-neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson")
+neighbourhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson")
 ```
+
+```{r}
+#| label: geo-viz
+
+neighbourhoods_geo <- neighbourhoods_geo |>
+  left_join(city_neighbourhoods, by = "neighbourhood") |>
+  transmute(neighbourhood = neighbourhood, city = city.y, 
+            neighbourhood_group = neighbourhood_group.x, geometry = geometry)
+
+ggplot(neighbourhoods_geo |> filter(city == "firenze")) + 
+  geom_sf() +
+  theme_bw()
+
+ggplot(neighbourhoods_geo |> filter(city == "milano")) + 
+  geom_sf() +
+  theme_bw()
+
+ggplot(neighbourhoods_geo |> filter(city == "napoli")) + 
+  geom_sf() +
+  theme_bw()
+
+ggplot(neighbourhoods_geo |> filter(city == "roma")) + 
+  geom_sf() +
+  theme_bw()
+
+ggplot(neighbourhoods_geo |> filter(city == "venezia")) + 
+  geom_sf() +
+  theme_bw()
+
+ggplot(neighbourhoods_geo |> filter(is.na(city))) + 
+  geom_sf() +
+  theme_bw()
+```
+
