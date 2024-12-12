@@ -1,0 +1,18 @@
+```{r}
+#| label: load-packages
+
+library(tidyverse)
+library(tidymodels)
+library(sf)
+```
+
+```{r}
+#| label: load-data
+
+city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv")
+neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv")
+city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv")
+city_data <- read.csv("data/airbnb_italy_city.csv")
+region_data <- read.csv("data/airbnb_italy_region.csv")
+neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson")
+```
