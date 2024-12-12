@@ -1,0 +1,63 @@
+---
+title: "Summer in Italy: A Seasonal Analysis of Airbnb Trends"
+author: Luke Checchio
+date: Fall 2024
+output: pdf_document
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: load-packages
+#| echo: FALSE
+#| warning: FALSE
+#| messages: FALSE
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(tidymodels))
+suppressPackageStartupMessages(library(sf))
+```
+
+```{r}
+#| label: load-data
+#| echo: FALSE
+#| warning: FALSE
+#| messages: FALSE
+
+city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv")
+neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv")
+city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv")
+city_data <- read.csv("data/airbnb_italy_city.csv")
+region_data <- read.csv("data/airbnb_italy_region.csv")
+neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson", quiet = T)
+```
+
+# 1. Introduction
+
+## 1.1 Motivation
+
+## 1.2 Dataset and Variables
+
+## 1.3 Exploratory Analysis
+
+# 2. Methodology
+
+## 2.1 Model and Variable Selection
+
+## 2.2 Model Assumptions
+
+# 3. Results
+
+# 4. Discussion
+
+\newpage
+
+# Appendix
+
+## References
+
+## Additional Exploratory Data Analysis
+
+## Model Assumption Investigation
