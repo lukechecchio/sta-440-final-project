@@ -108,6 +108,8 @@ summary(milano_lm)
 summary(napoli_lm)
 summary(roma_lm)
 summary(venezia_lm)
+
+
 ```
 
 ```{r}
@@ -126,5 +128,21 @@ summary(milano_mixed_effects)
 summary(napoli_mixed_effects)
 summary(roma_mixed_effects)
 summary(venezia_mixed_effects)
+
+new_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place + (1 | id), data = city_data)
+summary(new_mixed_effects, correlation = TRUE)
+vcov(new_mixed_effects)
+
+new_firenze_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = firenze_data)
+new_milano_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = milano_data)
+new_napoli_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = napoli_data)
+new_roma_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = roma_data)
+new_venezia_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = venezia_data)
+
+summary(new_firenze_mixed_effects)
+summary(new_milano_mixed_effects)
+summary(new_napoli_mixed_effects)
+summary(new_roma_mixed_effects)
+summary(new_venezia_mixed_effects)
 ```
 
