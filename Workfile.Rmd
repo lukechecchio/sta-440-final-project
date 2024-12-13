@@ -4,18 +4,36 @@
 library(tidyverse)
 library(tidymodels)
 library(sf)
+library(lme4)
 ```
 
 ```{r}
 #| label: load-data
 
-city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv")
-neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv")
-city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv")
-city_data <- read.csv("data/airbnb_italy_city.csv")
-region_data <- read.csv("data/airbnb_italy_region.csv")
-neighbourhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson")
+city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+city_data <- read.csv("data/airbnb_italy_city.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+region_data <- read.csv("data/airbnb_italy_region.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+neighbourhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson") |>
+  mutate(across(where(is.character), str_to_lower))
 ```
+
+```{r}
+#| label: city-data-split
+
+firenze_data <- city_data |> filter(place == "firenze")
+milano_data <- city_data |> filter(place == "milano")
+napoli_data <- city_data |> filter(place == "napoli")
+roma_data <- city_data |> filter(place == "roma")
+venezia_data <- city_data |> filter(place == "venezia")
+```
+
 
 ```{r}
 #| label: geo-viz
@@ -41,12 +59,72 @@ ggplot(neighbourhoods_geo |> filter(city == "roma")) +
   geom_sf() +
   theme_bw()
 
-ggplot(neighbourhoods_geo |> filter(city == "venezia")) + 
+ggplot(neighbourhoods_geo |> filter(city == "venezia" & !is.na(neighbourhood_group))) + 
   geom_sf() +
+  facet_grid(~ neighbourhood_group) +
   theme_bw()
 
-ggplot(neighbourhoods_geo |> filter(is.na(city))) + 
-  geom_sf() +
+# ggplot(neighbourhoods_geo |> filter(is.na(city))) + 
+#   geom_sf() +
+#   theme_bw()
+```
+
+```{r}
+#| label: grouped-data-creation
+
+grouped_neighbourhoods_full <- neighbourhoods_geo |>
+  full_join(neighbourhood_grouped, by = c("neighbourhood" = "neighbourhood", "city" = "place")) |>
+  group_by(neighbourhood, city, period) |>
+  mutate(period_price = mean(price_median)) |>
+  ungroup() |>
+  group_by(neighbourhood, city) |>
+  mutate(prop_period_price = period_price / sum(period_price) * 3)
+  
+```
+
+```{r}
+#| label: grouped-data-viz
+
+ggplot(grouped_neighbourhoods_full |> filter(city == "firenze")) + 
+  geom_sf(aes(fill = review_scores_rating_median)) +
+  facet_grid(~ period) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
   theme_bw()
+```
+
+```{r}
+#| label: price-model-fit-lm
+
+all_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place, data = city_data)
+firenze_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = firenze_data)
+milano_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = milano_data)
+napoli_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = napoli_data)
+roma_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = roma_data)
+venezia_lm <- lm(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = venezia_data)
+
+summary(all_lm)
+summary(firenze_lm)
+summary(milano_lm)
+summary(napoli_lm)
+summary(roma_lm)
+summary(venezia_lm)
+```
+
+```{r}
+#| label: mixed-effects-models
+
+all_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | place), data = city_data)
+firenze_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), data = firenze_data)
+milano_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), data = milano_data)
+napoli_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), data = napoli_data)
+roma_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), data = roma_data)
+venezia_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), data = venezia_data)
+
+summary(all_mixed_effects)
+summary(firenze_mixed_effects)
+summary(milano_mixed_effects)
+summary(napoli_mixed_effects)
+summary(roma_mixed_effects)
+summary(venezia_mixed_effects)
 ```
 
