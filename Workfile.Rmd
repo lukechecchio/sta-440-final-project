@@ -6,6 +6,7 @@ library(tidymodels)
 library(sf)
 library(lme4)
 library(lmerTest)
+library(MuMIn)
 ```
 
 ```{r}
@@ -259,10 +260,39 @@ extra_roma_rel_lm2 <- lm(relative_price ~ period,
                      data = roma_data |> filter(n >= 3))
 summary(extra_roma_rel_lm2)
 
+extra_all_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + place + period*place + (1 | id), data = city_data)
+extra_firenze_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = firenze_data)
+extra_milano_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = milano_data)
+extra_napoli_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = napoli_data)
 extra_roma_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = roma_data)
+extra_venezia_lm <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = venezia_data)
+
+summary(extra_all_lm)
+summary(extra_firenze_lm)
+summary(extra_milano_lm)
+summary(extra_napoli_lm)
 summary(extra_roma_lm)
+summary(extra_venezia_lm)
+
+anova(extra_all_lm)
+anova(extra_firenze_lm)
+anova(extra_milano_lm)
+anova(extra_napoli_lm)
 anova(extra_roma_lm)
+anova(extra_venezia_lm)
+
+r.squaredGLMM(extra_all_lm)
+r.squaredGLMM(extra_firenze_lm)
+r.squaredGLMM(extra_milano_lm)
+r.squaredGLMM(extra_napoli_lm)
+r.squaredGLMM(extra_roma_lm)
+r.squaredGLMM(extra_venezia_lm)
 ```
 
 ```{r}
