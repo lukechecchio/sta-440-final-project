@@ -383,10 +383,10 @@ venezia_data_filtered <- city_data_filtered |> filter(place == "venezia")
 
 extra_all_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + place + period*place + (1 | id), data = city_data_filtered)
-extra_firenze_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = firenze_data)
+extra_firenze_lm_filtered <- lmer(log(price) ~ review_scores_rating + host_is_superhost + period + (1 | id), data = firenze_data)
 extra_milano_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = milano_data)
+extra_milano_lm_filtered2 <- lmer(log(price) ~ review_scores_rating + host_is_superhost + period + (1 | id), data = milano_data)
 extra_napoli_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = napoli_data)
 extra_roma_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
@@ -397,6 +397,7 @@ extra_venezia_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rati
 summary(extra_all_lm_filtered)
 summary(extra_firenze_lm_filtered)
 summary(extra_milano_lm_filtered)
+summary(extra_milano_lm_filtered2)
 summary(extra_napoli_lm_filtered)
 summary(extra_roma_lm_filtered)
 summary(extra_venezia_lm_filtered)
@@ -411,6 +412,7 @@ anova(extra_venezia_lm_filtered)
 r.squaredGLMM(extra_all_lm_filtered)
 r.squaredGLMM(extra_firenze_lm_filtered)
 r.squaredGLMM(extra_milano_lm_filtered)
+r.squaredGLMM(extra_milano_lm_filtered2)
 r.squaredGLMM(extra_napoli_lm_filtered)
 r.squaredGLMM(extra_roma_lm_filtered)
 r.squaredGLMM(extra_venezia_lm_filtered)
@@ -434,7 +436,7 @@ plot(fitted(extra_venezia_lm_filtered), resid(extra_venezia_lm_filtered))
 qqnorm(resid(extra_venezia_lm_filtered))
 qqline(resid(extra_venezia_lm_filtered))
 
-ggplot(roma_data, aes(x = log(price))) +
+ggplot(firenze_data, aes(x = log(price))) +
   geom_density()
 ```
 
