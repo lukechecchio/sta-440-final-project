@@ -147,11 +147,17 @@ summary(new_venezia_mixed_effects)
 ```
 
 ```{r}
-#| label: relative-price-creation
+#| label: relative-vars-creation
 
 city_data <- city_data |>
   group_by(id) |>
-  mutate(relative_price = price / mean(price))
+  mutate(relative_price = price / mean(price), prop_reviews = number_of_reviews / sum(number_of_reviews), n = n())
+
+city_data |>
+  group_by(id) |>
+  summarize(n = n()) |>
+  ggplot(aes(x = n)) +
+  geom_bar()
 
 firenze_data <- city_data |> filter(place == "firenze")
 milano_data <- city_data |> filter(place == "milano")
@@ -159,13 +165,24 @@ napoli_data <- city_data |> filter(place == "napoli")
 roma_data <- city_data |> filter(place == "roma")
 venezia_data <- city_data |> filter(place == "venezia")
 
-ggplot(city_data, aes(x = relative_price)) +
-  geom_histogram() +
-  facet_grid(~ place)
+mean_data <- city_data %>%
+  group_by(period, place) %>%
+  summarize(mean = mean(relative_price))
 
-ggplot(city_data, aes(x = relative_price)) +
-  geom_histogram() +
-  facet_grid(~ period)
+ggplot(city_data |> filter(n != 1), aes(x = relative_price)) +
+  facet_grid(rows = vars(period), cols = vars(place)) +
+  geom_histogram()
+
+ggplot(city_data |> filter(n != 1), aes(x = relative_price)) +
+  facet_grid(rows = vars(period), cols = vars(place)) +
+  geom_density()
+
+ggplot(city_data, aes(x = prop_reviews)) +
+  facet_grid(rows = vars(period), cols = vars(place)) +
+  geom_histogram()
+
+boxplot(city_data$relative_price)
+boxplot(city_data$prop_reviews)
 ```
 
 ```{r}
