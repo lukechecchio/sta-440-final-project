@@ -171,8 +171,8 @@ ggplot(city_data, aes(x = relative_price)) +
 ```{r}
 #| label: rel-price-model-fit-lm
 
-all_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place, data = city_data)
-firenze_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = firenze_data)
+all_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place + period*place, data = city_data)
+firenze_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period, data = firenze_data)
 milano_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = milano_data)
 napoli_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = napoli_data)
 roma_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = roma_data)
@@ -189,9 +189,9 @@ summary(venezia_rel_lm)
 ```{r}
 #| label: mixed-effects-models
 
-all_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | place), 
+all_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + (1 + period | place), 
                               data = city_data)
-firenze_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+firenze_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + (1 + period | id), 
                                   data = firenze_data)
 milano_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
                                  data = milano_data)
