@@ -153,6 +153,10 @@ city_data <- city_data |>
   group_by(id) |>
   mutate(relative_price = price / mean(price), prop_reviews = number_of_reviews / sum(number_of_reviews), n = n())
 
+city_data <- city_data |>
+  group_by(place) |>
+  mutate(relative_lat = abs(latitude - mean(latitude)), relative_long = abs(longitude - mean(longitude)))
+
 city_data |>
   group_by(id) |>
   summarize(n = n()) |>
@@ -183,6 +187,8 @@ ggplot(city_data, aes(x = prop_reviews)) +
 
 boxplot(city_data$relative_price)
 boxplot(city_data$prop_reviews)
+
+# density(city_data$relative_lat)
 ```
 
 ```{r}
@@ -227,6 +233,30 @@ summary(new_milano_rel_lm)
 summary(new_napoli_rel_lm)
 summary(new_roma_rel_lm)
 summary(new_venezia_rel_lm)
+
+
+extra_roma_rel_lm <- lm(relative_price ~ review_scores_rating + host_is_superhost + period, 
+                     data = roma_data)
+summary(extra_roma_rel_lm)
+
+ggplot(roma_data, aes(x = relative_price)) +
+  geom_histogram() +
+  facet_grid(rows = vars(period))
+
+ggplot(roma_data, aes(x = relative_price)) +
+  geom_boxplot() +
+  facet_grid(rows = vars(period))
+
+roma_data |>
+  filter(relative_price <= 2) |>
+  ggplot(aes(x = relative_price)) +
+  geom_boxplot() +
+  facet_grid(rows = vars(period))
+
+
+extra_roma_rel_lm2 <- lm(relative_price ~ period, 
+                     data = roma_data |> filter(n >= 3))
+summary(extra_roma_rel_lm2)
 ```
 
 ```{r}
