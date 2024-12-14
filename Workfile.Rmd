@@ -8,6 +8,8 @@ library(lme4)
 library(lmerTest)
 library(MuMIn)
 library(brms)
+library(moments)
+library(lqmm)
 ```
 
 ```{r}
@@ -467,5 +469,30 @@ fit <- brm(log_price ~ period + (1 | id), data = city_data, family = gaussian(),
 summary(fit)
 plot(fit)
 bayesplot::mcmc_trace(fit)
+```
+
+```{r}
+#| label: mean-price-model
+
+city_data_mean <- city_data |>
+  select(id, host_is_superhost, latitude, longitude, room_type, accommodates, price, review_scores_rating, place) |>
+  group_by(id, latitude, longitude, room_type, accommodates, place) |>
+  summarize(mean_price = mean(price), prop_superhost = mean(host_is_superhost), mean_review = mean(review_scores_rating))
+
+mean_regression <- lmer(log(mean_price) ~ room_type + accommodates + mean_review + (1 | place), data = city_data_mean)
+summary(mean_regression)
+qqnorm(resid(mean_regression))
+
+skewness(log(city_data$price))
+kurtosis(log(city_data$price))
+```
+
+```{r}
+#| label: quantile-reg
+
+firenze_quantile <- lqmm(log(price) ~ 1,
+                         random = ~ 1, tau = 0.5, data = firenze_data)
+summary(fit_quantile)
+
 ```
 
