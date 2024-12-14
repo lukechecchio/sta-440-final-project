@@ -293,6 +293,19 @@ r.squaredGLMM(extra_milano_lm)
 r.squaredGLMM(extra_napoli_lm)
 r.squaredGLMM(extra_roma_lm)
 r.squaredGLMM(extra_venezia_lm)
+
+plot(fitted(extra_all_lm), resid(extra_all_lm))
+qqnorm(resid(extra_all_lm))
+plot(fitted(extra_firenze_lm), resid(extra_firenze_lm))
+qqnorm(resid(extra_firenze_lm))
+plot(fitted(extra_milano_lm), resid(extra_milano_lm))
+qqnorm(resid(extra_milano_lm))
+plot(fitted(extra_napoli_lm), resid(extra_napoli_lm))
+qqnorm(resid(extra_napoli_lm))
+plot(fitted(extra_roma_lm), resid(extra_roma_lm))
+qqnorm(resid(extra_roma_lm))
+plot(fitted(extra_venezia_lm), resid(extra_venezia_lm))
+qqnorm(resid(extra_venezia_lm))
 ```
 
 ```{r}
@@ -333,5 +346,95 @@ summary(venezia_mixed_effects_rel)
 # summary(new_napoli_mixed_effects)
 # summary(new_roma_mixed_effects)
 # summary(new_venezia_mixed_effects)
+```
+
+```{r}
+#| label: reducing-outliers
+
+price_cutoff <- 1000
+
+city_data |>
+  filter(price >= price_cutoff) |>
+  ggplot(aes(x = place)) +
+  geom_bar()
+
+city_data |>
+  mutate(high_price = (price >= price_cutoff)) |>
+  ggplot(aes(x = place, fill = high_price)) +
+  geom_bar()
+
+city_data |> 
+  mutate(high_price = (price >= price_cutoff)) |>
+  group_by(place) |>
+  summarize(count_high = sum(high_price), prop_high = mean(high_price))
+
+city_data_filtered <- city_data |>
+  mutate(high_price = (price >= price_cutoff))
+
+firenze_data_filtered <- city_data_filtered |> filter(place == "firenze")
+milano_data_filtered <- city_data_filtered |> filter(place == "milano")
+napoli_data_filtered <- city_data_filtered |> filter(place == "napoli")
+roma_data_filtered <- city_data_filtered |> filter(place == "roma")
+venezia_data_filtered <- city_data_filtered |> filter(place == "venezia")
+```
+
+```{r}
+#| label: model-reduced-outliers
+
+extra_all_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + place + period*place + (1 | id), data = city_data_filtered)
+extra_firenze_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = firenze_data)
+extra_milano_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = milano_data)
+extra_napoli_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = napoli_data)
+extra_roma_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = roma_data)
+extra_venezia_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = venezia_data)
+
+summary(extra_all_lm_filtered)
+summary(extra_firenze_lm_filtered)
+summary(extra_milano_lm_filtered)
+summary(extra_napoli_lm_filtered)
+summary(extra_roma_lm_filtered)
+summary(extra_venezia_lm_filtered)
+
+anova(extra_all_lm_filtered)
+anova(extra_firenze_lm_filtered)
+anova(extra_milano_lm_filtered)
+anova(extra_napoli_lm_filtered)
+anova(extra_roma_lm_filtered)
+anova(extra_venezia_lm_filtered)
+
+r.squaredGLMM(extra_all_lm_filtered)
+r.squaredGLMM(extra_firenze_lm_filtered)
+r.squaredGLMM(extra_milano_lm_filtered)
+r.squaredGLMM(extra_napoli_lm_filtered)
+r.squaredGLMM(extra_roma_lm_filtered)
+r.squaredGLMM(extra_venezia_lm_filtered)
+
+plot(fitted(extra_all_lm_filtered), resid(extra_all_lm_filtered))
+qqnorm(resid(extra_all_lm_filtered))
+qqline(resid(extra_all_lm_filtered))
+plot(fitted(extra_firenze_lm_filtered), resid(extra_firenze_lm_filtered))
+qqnorm(resid(extra_firenze_lm_filtered))
+qqline(resid(extra_firenze_lm_filtered))
+plot(fitted(extra_milano_lm_filtered), resid(extra_milano_lm_filtered))
+qqnorm(resid(extra_milano_lm_filtered))
+qqline(resid(extra_milano_lm_filtered))
+plot(fitted(extra_napoli_lm_filtered), resid(extra_napoli_lm_filtered))
+qqnorm(resid(extra_napoli_lm_filtered))
+qqline(resid(extra_napoli_lm_filtered))
+plot(fitted(extra_roma_lm_filtered), resid(extra_roma_lm_filtered))
+qqnorm(resid(extra_roma_lm_filtered))
+qqline(resid(extra_roma_lm_filtered))
+plot(fitted(extra_venezia_lm_filtered), resid(extra_venezia_lm_filtered))
+qqnorm(resid(extra_venezia_lm_filtered))
+qqline(resid(extra_venezia_lm_filtered))
+
+ggplot(roma_data, aes(x = log(price))) +
+  geom_density()
 ```
 
