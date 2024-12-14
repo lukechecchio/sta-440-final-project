@@ -436,7 +436,21 @@ plot(fitted(extra_venezia_lm_filtered), resid(extra_venezia_lm_filtered))
 qqnorm(resid(extra_venezia_lm_filtered))
 qqline(resid(extra_venezia_lm_filtered))
 
+temp <- lm(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + relative_lat + 
+                        relative_long + place, data = city_data)
+summary(temp) 
+plot(fitted(temp), resid(temp))
+qqnorm(resid(temp))
+
+new_df <- city_data |> group_by(id) |> summarize(mean_price = mean(price))
+
+ggplot(new_df, aes(x = log(mean_price))) +
+  geom_boxplot()
+
 ggplot(firenze_data, aes(x = log(price))) +
   geom_density()
+
+ggplot(region_data, aes(x = log(price))) +
+  geom_boxplot()
 ```
 
