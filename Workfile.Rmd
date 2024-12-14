@@ -146,3 +146,83 @@ summary(new_roma_mixed_effects)
 summary(new_venezia_mixed_effects)
 ```
 
+```{r}
+#| label: relative-price-creation
+
+city_data <- city_data |>
+  group_by(id) |>
+  mutate(relative_price = price / mean(price))
+
+firenze_data <- city_data |> filter(place == "firenze")
+milano_data <- city_data |> filter(place == "milano")
+napoli_data <- city_data |> filter(place == "napoli")
+roma_data <- city_data |> filter(place == "roma")
+venezia_data <- city_data |> filter(place == "venezia")
+
+ggplot(city_data, aes(x = relative_price)) +
+  geom_histogram() +
+  facet_grid(~ place)
+
+ggplot(city_data, aes(x = relative_price)) +
+  geom_histogram() +
+  facet_grid(~ period)
+```
+
+```{r}
+#| label: rel-price-model-fit-lm
+
+all_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place, data = city_data)
+firenze_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = firenze_data)
+milano_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = milano_data)
+napoli_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = napoli_data)
+roma_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = roma_data)
+venezia_rel_lm <- lm(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + neighbourhood, data = venezia_data)
+
+summary(all_rel_lm)
+summary(firenze_rel_lm)
+summary(milano_rel_lm)
+summary(napoli_rel_lm)
+summary(roma_rel_lm)
+summary(venezia_rel_lm)
+```
+
+```{r}
+#| label: mixed-effects-models
+
+all_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | place), 
+                              data = city_data)
+firenze_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+                                  data = firenze_data)
+milano_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+                                 data = milano_data)
+napoli_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+                                 data = napoli_data)
+roma_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+                               data = roma_data)
+venezia_mixed_effects_rel <- lmer(relative_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | neighbourhood), 
+                                  data = venezia_data)
+
+summary(all_mixed_effects_rel)
+summary(firenze_mixed_effects_rel)
+summary(milano_mixed_effects_rel)
+summary(napoli_mixed_effects_rel)
+summary(roma_mixed_effects_rel)
+summary(venezia_mixed_effects_rel)
+
+# new_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + place + (1 | id), data = city_data)
+# summary(new_mixed_effects, correlation = TRUE)
+# vcov(new_mixed_effects)
+# 
+# new_firenze_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = firenze_data)
+# new_milano_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = milano_data)
+# new_napoli_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = napoli_data)
+# new_roma_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = roma_data)
+# new_venezia_mixed_effects <- lmer(price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + (1 | id), data = venezia_data)
+# 
+# summary(new_firenze_mixed_effects)
+# summary(new_milano_mixed_effects)
+# summary(new_napoli_mixed_effects)
+# summary(new_roma_mixed_effects)
+# summary(new_venezia_mixed_effects)
+```
+
