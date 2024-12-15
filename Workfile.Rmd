@@ -11,6 +11,7 @@ library(brms)
 library(moments)
 library(lqmm)
 library(car)
+library(robustlmm)
 ```
 
 ```{r}
@@ -505,9 +506,16 @@ kurtosis(log(city_data$price))
 ```{r}
 #| label: quantile-reg
 
-firenze_quantile <- lqmm(log(price) ~ 1,
+firenze_quantile <- lqmm(relative_price ~ 1,
                          random = ~ 1, tau = 0.5, data = firenze_data)
 # summary(fit_quantile)
 
+```
+
+```{r}
+#| label: robust-reg
+
+robust_firenze <- rlmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = firenze_data)
 ```
 
