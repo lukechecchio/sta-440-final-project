@@ -26,8 +26,8 @@ city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv") |>
   mutate(across(where(is.character), str_to_lower))
 city_data <- read.csv("data/airbnb_italy_city.csv") |>
   mutate(across(where(is.character), str_to_lower))
-region_data <- read.csv("data/airbnb_italy_region.csv") |>
-  mutate(across(where(is.character), str_to_lower))
+# region_data <- read.csv("data/airbnb_italy_region.csv") |>
+#   mutate(across(where(is.character), str_to_lower))
 neighbourhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson") |>
   mutate(across(where(is.character), str_to_lower))
 ```
@@ -401,7 +401,7 @@ venezia_data_filtered <- city_data_filtered |> filter(place == "venezia")
 
 extra_all_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + place + period*place + (1 | id), data = city_data)
-extra_firenze_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+extra_firenze_lm_filtered <- lmer(log(sqrt(price)) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = firenze_data)
 extra_milano_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = milano_data)
@@ -439,7 +439,7 @@ r.squaredGLMM(extra_venezia_lm_filtered)
 plot(fitted(extra_all_lm_filtered), resid(extra_all_lm_filtered))
 qqnorm(resid(extra_all_lm_filtered))
 qqline(resid(extra_all_lm_filtered))
-plot(fitted(extra_firenze_lm_filtered), resid(extra_firenze_lm_filtered), alpha = 0.5)
+plot(fitted(extra_firenze_lm_filtered), resid(extra_firenze_lm_filtered))
 qqnorm(resid(extra_firenze_lm_filtered))
 qqline(resid(extra_firenze_lm_filtered))
 plot(density(resid(extra_firenze_lm_filtered)))
@@ -516,8 +516,7 @@ kurtosis(log(city_data$price))
 ```{r}
 #| label: robust-reg
 
-robust_firenze <- rlmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = firenze_data)
+robust_firenze <- rlmer(log(price) ~ 1 | neighbourhood, data = firenze_data)
 
 heavy_firenze <- heavyLme(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long, groups = ~ id, data = firenze_data, family = Student(df = 3))
