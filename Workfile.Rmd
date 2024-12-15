@@ -10,6 +10,7 @@ library(MuMIn)
 library(brms)
 library(moments)
 library(lqmm)
+library(car)
 ```
 
 ```{r}
@@ -91,7 +92,7 @@ grouped_neighbourhoods_full <- neighbourhoods_geo |>
 #| label: grouped-data-viz
 
 ggplot(grouped_neighbourhoods_full |> filter(city == "firenze")) + 
-  geom_sf(aes(fill = review_scores_rating_median)) +
+  geom_sf(aes(fill = price_median)) +
   facet_grid(~ period) +
   scale_fill_gradient(low = "lightblue", high = "darkblue") +
   theme_bw()
@@ -114,7 +115,8 @@ summary(napoli_lm)
 summary(roma_lm)
 summary(venezia_lm)
 
-
+all_lm2 <- lm(price_median ~ accommodates_median + review_scores_rating_median + room_type_mode + period + place, data = neighbourhood_grouped)
+summary(all_lm2)
 ```
 
 ```{r}
@@ -149,6 +151,9 @@ summary(new_milano_mixed_effects)
 summary(new_napoli_mixed_effects)
 summary(new_roma_mixed_effects)
 summary(new_venezia_mixed_effects)
+
+median_mixed <- lmer(price_median ~ accommodates_median + review_scores_rating_median + room_type_mode + period + (1 | place), data = neighbourhood_grouped)
+summary(median_mixed)
 ```
 
 ```{r}
@@ -194,6 +199,14 @@ boxplot(city_data$relative_price)
 boxplot(city_data$prop_reviews)
 
 # density(city_data$relative_lat)
+
+ggplot(neighbourhood_grouped |> filter(place == "firenze"), aes(x = price_median)) +
+  facet_grid(rows = vars(period)) +
+  geom_histogram(bins = 10)
+
+ggplot(neighbourhood_grouped |> filter(place == "roma"), aes(x = price_median)) +
+  facet_grid(rows = vars(period)) +
+  geom_histogram(bins = 10)
 ```
 
 ```{r}
@@ -385,8 +398,9 @@ venezia_data_filtered <- city_data_filtered |> filter(place == "venezia")
 #| label: model-reduced-outliers
 
 extra_all_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + place + period*place + (1 | id), data = city_data_filtered)
-extra_firenze_lm_filtered <- lmer(log(price) ~ review_scores_rating + host_is_superhost + period + (1 | id), data = firenze_data)
+                        relative_long + place + period*place + (1 | id), data = city_data)
+extra_firenze_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = firenze_data)
 extra_milano_lm_filtered <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = milano_data)
 extra_milano_lm_filtered2 <- lmer(log(price) ~ review_scores_rating + host_is_superhost + period + (1 | id), data = milano_data)
@@ -423,9 +437,10 @@ r.squaredGLMM(extra_venezia_lm_filtered)
 plot(fitted(extra_all_lm_filtered), resid(extra_all_lm_filtered))
 qqnorm(resid(extra_all_lm_filtered))
 qqline(resid(extra_all_lm_filtered))
-plot(fitted(extra_firenze_lm_filtered), resid(extra_firenze_lm_filtered))
+plot(fitted(extra_firenze_lm_filtered), resid(extra_firenze_lm_filtered), alpha = 0.5)
 qqnorm(resid(extra_firenze_lm_filtered))
 qqline(resid(extra_firenze_lm_filtered))
+plot(density(resid(extra_firenze_lm_filtered)))
 plot(fitted(extra_milano_lm_filtered), resid(extra_milano_lm_filtered))
 qqnorm(resid(extra_milano_lm_filtered))
 qqline(resid(extra_milano_lm_filtered))
@@ -492,7 +507,7 @@ kurtosis(log(city_data$price))
 
 firenze_quantile <- lqmm(log(price) ~ 1,
                          random = ~ 1, tau = 0.5, data = firenze_data)
-summary(fit_quantile)
+# summary(fit_quantile)
 
 ```
 
