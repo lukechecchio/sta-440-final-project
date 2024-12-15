@@ -12,6 +12,7 @@ library(moments)
 library(lqmm)
 library(car)
 library(robustlmm)
+library(heavy)
 ```
 
 ```{r}
@@ -507,7 +508,7 @@ kurtosis(log(city_data$price))
 #| label: quantile-reg
 
 firenze_quantile <- lqmm(relative_price ~ 1,
-                         random = ~ 1, tau = 0.5, data = firenze_data)
+                         random = ~ id, tau = 0.5, data = firenze_data)
 # summary(fit_quantile)
 
 ```
@@ -517,5 +518,8 @@ firenze_quantile <- lqmm(relative_price ~ 1,
 
 robust_firenze <- rlmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = firenze_data)
+
+heavy_firenze <- heavyLme(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long, groups = ~ id, data = firenze_data, family = Student(df = 3))
 ```
 
