@@ -10,6 +10,16 @@ execute:
   warning: false
   message: false
 ---
+```{r}
+#| label: doc-setup
+#| include: FALSE
+
+suppressPackageStartupMessages(library(knitr))
+opts_chunk$set(echo = F, warning = F, message = F, fig.width = 8, fig.height = 6, fig.show = "asis",
+               out.width = "5in", fig.align = 'center')
+```
+
+
 
 ```{r}
 #| label: load-packages
@@ -20,9 +30,6 @@ suppressPackageStartupMessages(library(sf))
 suppressPackageStartupMessages(library(lme4))
 suppressPackageStartupMessages(library(MuMIn))
 suppressPackageStartupMessages(library(patchwork))
-suppressPackageStartupMessages(library(knitr))
-
-opts_chunk$set(echo = F, warning = F, message = F, fig.width = 4, fig.height = 3, fig.show = "asis")
 ```
 
 ```{r}
@@ -44,7 +51,7 @@ city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv") |>
 
 ## 1.1 Motivation
 
-After dropping to historic lows in the midst of the COVID-19 pandemic, travel is well on track to recover to pre-2020 levels. These trends show no sign of a slowing, and by 2030, international travel is expected to reach 9 billion lodging nights per year (McKinsey & Company).Since the advent of Airbnb, the landscape of short-term lodging and tourism has transformed dramatically, providing an unprecedented array of choices for travelers and a novel source of income for property owners. Italy, with its rich cultural heritage and popular tourist destinations, has seen significant growth in Airbnb listings, particularly in major cities and tourist hubs. In fact, today, Airbnb accounts for the second largest share of online bookings within the country, at a nearly 30% market share (Statista). The dynamics of pricing within the Italian Airbnb market, however, remain complex and subject to various influences, including seasonal fluctuations which significantly impact both availability and cost.
+After dropping to historic lows in the midst of the COVID-19 pandemic, travel is well on track to recover to pre-2020 levels. These trends show no sign of a slowing, and by 2030, international travel is expected to reach 9 billion lodging nights per year (McKinsey & Company). Since the advent of Airbnb, the landscape of short-term lodging and tourism has transformed dramatically, providing an unprecedented array of choices for travelers and a novel source of income for property owners. Italy, with its rich cultural heritage and popular tourist destinations, has seen significant growth in Airbnb listings, particularly in major cities and tourist hubs. In fact, today, Airbnb accounts for the second largest share of online bookings within the country, at a nearly 30% market share (Statista). The dynamics of pricing within the Italian Airbnb market, however, remain complex and subject to various influences, including seasonal fluctuations which significantly impact both availability and cost.
 
 The interplay between seasonality and pricing is critical in tourism-centric economies like Italy's, where different regions experience peak tourist seasons at various times of the year. For example, coastal areas see a surge during summer months, while cities rich in art and history, such as Florence and Rome, typically can attract visitors year-round. Understanding these patterns is essential not only for economic forecasting and business planning for hosts but also for policy-making in tourism management.
 
@@ -70,7 +77,6 @@ city_data <- city_data |>
                             period == "early autumn" ~ "Fall",
                             period == "early summer" ~ "Summer",
                             period == "early winter" ~ "Winter"))
-
 city_data$period <- factor(city_data$period, levels = c("Spring", "Summer", "Fall", "Winter"))
 
 firenze_data <- city_data |> filter(place == "firenze")
@@ -78,6 +84,14 @@ milano_data <- city_data |> filter(place == "milano")
 napoli_data <- city_data |> filter(place == "napoli")
 roma_data <- city_data |> filter(place == "roma")
 venezia_data <- city_data |> filter(place == "venezia")
+
+city_data$accommodates <- factor(city_data$accommodates, levels = c(1:16))
+
+city_data <- city_data |>
+  mutate(room_type = case_when(room_type == "entire home/apt" ~ "Entire Home/Apartment",
+                               room_type == "private room" ~ "Private Room",
+                               room_type == "hotel room" ~ "Hotel Room",
+                               room_type == "shared room" ~ "Shared Room"))
 ```
 
 The dataset used for this study comprises Airbnb listing records from five major Italian cities: Florence, Milan, Naples, Rome, and Venice. Data were methodically scraped on a quarterly basis from December 2023 to September 2024 to capture seasonal variations in listing attributes, correlating each data collection round with one of the four seasons. This temporal alignment lends itself to a detailed examination of how seasonal factors influence Airbnb pricing, amongst other variables.
@@ -114,6 +128,8 @@ ggplot(city_data, aes(x = log_price)) +
 ```
 
 The plot above shows the log-transformed distribution of Airbnb prices in Italy. The transformation normalizes the price data, making it easier to observe common price points and variability. A similar plot of the prices prior to log-transformation is included in the Appendix, where it is clear that the distribution exhibits a heavy right-skew.
+
+The below plot displays a series of adjacent maps illustrating the median Airbnb prices by neighborhood across different seasons in Rome. The maps use a color gradient from light pink to dark red to depict the range of median prices in euros, with darker shades indicating higher prices. From the visualization, it seems that across most neighbourhoods, the median price tends to be higher in spring, summer, and fall than winter. This relationship is especially prevalent within the center-most neighbourhood, the Historic Center (Centro Historico), which turns noticeably darker in the summer and fall, indicating higher median Airbnb prices. Graphs similar to that which is displayed above are included in the appendix for the four other cities examined. The relationship between season and price was less obvious in the plots for Napoli and Milan, while Florence and Venice's graphs both exhibited characteristics similar to that observed in Rome's.
 
 ```{r}
 #| label: seasonal-price-rome
@@ -160,144 +176,7 @@ ggplot(grouped_neighbourhoods_full |> filter(city == "roma")) +
   )
 ```
 
-The above plot displays a series of adjacent maps illustrating the median Airbnb prices by neighborhood across different seasons in Rome. The maps use a color gradient from light pink to dark red to depict the range of median prices in euros, with darker shades indicating higher prices. From the visualization, it seems that across most neighbourhoods, the median price tends to be higher in spring, summer, and fall than winter. This relationship is especially prevalent within the center-most neighbourhood, the Historic Center (Centro Historico), which turns noticeably darker in the summer and fall, indicating higher median Airbnb prices. Graphs similar to that which is displayed above are included in the appendix for the four other cities examined. The relationship between season and price was less obvious in the plots for Napoli and Milan, while Florence and Venice's graphs both exhibited characteristics similar to that observed in Rome's.
-
-```{r}
-#| label: guests-price
-#| fig-cap: "Airbnb Log-Price Distribution by Maximum Guests Allowed"
-
-city_data$accommodates <- factor(city_data$accommodates, levels = c(1:16))
-
-ggplot(city_data, aes(x = accommodates, y = log_price)) +
-  geom_boxplot(color = "#008C45", size = 1) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    #panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(face = "bold"),
-  ) +
-  labs(
-    title = "Distribution of Log-transformed Airbnb prices in Italy, by # of Guests Permitted",
-    x = "Max. # of Guests",
-    y = "Log-price"
-  )
-```
-
-
-```{r}
-#| label: rating-price
-#| fig-cap: "Relationship Between Airbnb Log-Price and Guest Rating"
-
-ggplot(city_data, aes(x = review_scores_rating, y = log_price)) +
-  geom_point(color = "#CD212A", alpha = 0.1) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    #panel.grid.major = element_blank(),
-    #panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(face = "bold"),
-  ) +
-  labs(
-    title = "Log-transformed Italian Airbnb prices vs. guest rating",
-    x = "Guest Rating",
-    y = "Log-price"
-  )
-```
-
-```{r}
-#| label: roomtype-price
-#| fig-cap: "Airbnb Log-Price Distribution by Room Type"
-
-city_data <- city_data |>
-  mutate(room_type = case_when(room_type == "entire home/apt" ~ "Entire Home/Apartment",
-                               room_type == "private room" ~ "Private Room",
-                               room_type == "hotel room" ~ "Hotel Room",
-                               room_type == "shared room" ~ "Shared Room"))
-
-ggplot(city_data, aes(x = log_price)) +
-  geom_density(color = "#008C45", fill = "#83F0B9", size = 1.1) +
-  facet_grid(rows = vars(room_type)) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(face = "bold"),
-    strip.text.y = element_text(angle = 0, vjust = 0.5)
-  ) +
-  labs(
-    title = "Distribution of Log-transformed Airbnb prices in Italy, by room type",
-    x = "Log-price",
-    y = "Density"
-  )
-```
-
-```{r}
-#| label: superhost-price
-#| fig-cap: "Airbnb Log-Price Distribution by Superhost Status"
-
-city_data <- city_data |>
-  mutate(host_is_superhost = case_when(host_is_superhost == "t" ~ "Yes",
-                                       host_is_superhost == "f" ~ "No"))
-
-ggplot(city_data, aes(x = host_is_superhost, y = log_price)) +
-  geom_boxplot(color = "#CD212A", size = 1) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    #panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(face = "bold"),
-  ) +
-  labs(
-    title = "Distribution of Log-transformed Airbnb prices in Italy, by superhost status",
-    x = "Superhost?",
-    y = "Log-price"
-  )
-```
-
-```{r}
-#| label: longitude-price
-#| fig-cap: "Relationship Between Airbnb Log-Price and Relative Latitude/Longitude"
-
-long_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
-  geom_point(color = "#008C45", alpha = 0.1) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    #panel.grid.major = element_blank(),
-    #panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-  ) +
-  labs(
-    #title = "Log-transformed Italian Airbnb prices vs. relative longitude and latitude",
-    x = "Relative longitude",
-    y = "Log-price"
-  )
-
-lat_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
-  geom_point(color = "#CD212A", alpha = 0.1) +
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill = "#FFFFFF", color = NA),
-    #panel.grid.major = element_blank(),
-    #panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-  ) +
-  labs(
-    #title = "Log-transformed Italian Airbnb prices vs. relative latitude",
-    x = "Relative latitude",
-    y = ""
-  )
-
-(long_plot + lat_plot) + plot_annotation(title = "Log-transformed Italian Airbnb prices vs. relative latitude and longitude",
-                                         theme = theme(plot.title = element_text(face = "bold")))
-```
+Exploratory analysis was conducted on several additional variables deemed important for model fitting, although not necessarily relevant to the research question itself. These plots are included in the Appendix.
 
 # 2. Methodology
 
@@ -350,7 +229,7 @@ rownames(firenze_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Ro
 firenze_coef <- as.data.frame(firenze_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-firenze_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
+firenze_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"), caption = "Florence Model Fixed Effects")
 ```
 
 The coefficient of 0.117 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Florence in the summer is expected to be 0.117 units higher than in the spring, or a $e^{0.117} - 1 \approx 12.4\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.125 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Florence in the winter is expected to be 0.125 units lower than in the spring, or a $e^{-0.125} - 1 \approx -11.8\%$ decrease in the price in Euros relative to spring.
@@ -365,7 +244,7 @@ rownames(milano_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Roo
 milano_coef <- as.data.frame(milano_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-milano_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
+milano_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"), caption = "Milan Model Fixed Effects")
 ```
 
 The coefficient of 0.037 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Milan in the summer is expected to be 0.037 units higher than in the spring, or a $e^{0.037} - 1 \approx 3.4\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.021 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Milan in the winter is expected to be 0.021 units lower than in the spring, or a $e^{-0.021} - 1 \approx -2.1\%$ decrease in the price in Euros relative to spring.
@@ -380,7 +259,7 @@ rownames(napoli_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Roo
 napoli_coef <- as.data.frame(napoli_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
+napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"), caption = "Naples Model Fixed Effects")
 ```
 
 The coefficient of 0.025 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Naples in the summer is expected to be 0.025 units higher than in the spring, or a $e^{0.025} - 1 \approx 2.5\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.016 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Naples in the winter is expected to be 0.016 units lower than in the spring, or a $e^{-0.016} - 1 \approx -1.6\%$ decrease in the price in Euros relative to spring.
@@ -395,7 +274,7 @@ rownames(roma_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room 
 roma_coef <- as.data.frame(roma_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
+roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"), caption = "Rome Model Fixed Effects")
 ```
 
 The coefficient of 0.137 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the summer is expected to be 0.137 units higher than in the spring, or a $e^{0.137} - 1 \approx 14.7\%$ increase in the price in Euros relative to spring. In a similar fashion, the coefficient of 0.122 for fall in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the fall is expected to be 0.122 units higher than in the spring, or a $e^{0.122} - 1 \approx 13.0\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.141 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the winter is expected to be 0.141 units lower than in the spring, or a $e^{-0.141} - 1 \approx -13.2\%$ decrease in the price in Euros relative to spring.
@@ -410,7 +289,7 @@ rownames(venezia_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Ro
 venezia_coef <- as.data.frame(venezia_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-venezia_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
+venezia_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"), caption = "Venice Model Fixed Effects")
 ```
 
 The coefficient of 0.205 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Venice in the summer is expected to be 0.205 units higher than in the spring, or a $e^{0.205} - 1 \approx 22.8\%$ increase in the price in Euros relative to spring. In a similar fashion, the coefficient of 0.248 for fall in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Venice in the fall is expected to be 0.248 units higher than in the spring, or a $e^{0.248} - 1 \approx 28.1\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.063 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the winter is expected to be 0.063 units lower than in the spring, or a $e^{-0.063} - 1 \approx -6.1\%$ decrease in the price in Euros relative to spring.
@@ -431,21 +310,19 @@ Looking forward, future work could effectively explore interaction effects betwe
 
 ## References
 
-https://www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insights/now-boarding-faces-places-and-trends-shaping-tourism-in-2024
+* Baayen, R.H., et al. “Mixed-effects modeling with crossed random effects for subjects and items.” Journal of Memory and Language, vol. 59, no. 4, Nov. 2008, pp. 390–412, [https://doi.org/10.1016/j.jml.2007.12.005](https://doi.org/10.1016/j.jml.2007.12.005). 
 
-https://www.statista.com/forecasts/1000846/hotel-private-accommodation-online-bookings-by-brand-in-italy
+* Bashir, Umair. “Hotel / Private Accommodation Online Bookings by Brand in Italy 2024.” Statista, 23 Oct. 2024, [www.statista.com/forecasts/1000846/hotel-private-accommodation-online-bookings-by-brand-in-italy](www.statista.com/forecasts/1000846/hotel-private-accommodation-online-bookings-by-brand-in-italy).
 
-https://www.kaggle.com/datasets/salvatoremarcello/italian-airbnb-dataset?select=airbnb.csv
+* “Linear Mixed Effect Models.” University of St. Andrews, [https://www.st-andrews.ac.uk/media/ceed/students/mathssupport/mixedeffectsknir.pdf](https://www.st-andrews.ac.uk/media/ceed/students/mathssupport/mixedeffectsknir.pdf).
 
-https://yihui.org/knitr/options/#chunk-options
+* Marcello, Salvatore. "Italian Airbnb Dataset." Inside Airbnb, 17 Sep. 2024, [https://www.kaggle.com/datasets/salvatoremarcello/italian-airbnb-dataset](https://www.kaggle.com/datasets/salvatoremarcello/italian-airbnb-dataset).
 
-https://patchwork.data-imaginist.com/articles/guides/annotation.html
+* Pederson, Thomas Lin. “Adding Annotation and Style.” Patchwork, 18 Aug. 2022, [patchwork.data-imaginist.com/articles/guides/annotation.html](patchwork.data-imaginist.com/articles/guides/annotation.html). 
 
-https://www.st-andrews.ac.uk/media/ceed/students/mathssupport/mixedeffectsknir.pdf
+* Tufft, Caroline, et al. “Now Boarding: Faces, Places, and Trends Shaping Tourism in 2024.” McKinsey & Company, McKinsey & Company, 29 May 2024, [www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insights/now-boarding-faces-places-and-trends-shaping-tourism-in-2024](www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insights/now-boarding-faces-places-and-trends-shaping-tourism-in-2024).
 
-https://www.sciencedirect.com/science/article/pii/S0749596X07001398
-
-*Put citations here*
+* Xie, Yihui. “Options: Chunk Options and Package Options.” Knitr, 30 June 2020, [yihui.org/knitr/options/#chunk-options](yihui.org/knitr/options/#chunk-options).
 
 ## Additional Exploratory Data Analysis
 
@@ -575,146 +452,334 @@ ggplot(grouped_neighbourhoods_full |> filter(city == "venezia")) +
   )
 ```
 
+```{r}
+#| label: guests-price
+#| fig-cap: "Airbnb Log-Price Distribution by Maximum Guests Allowed"
 
-## Model Investigation
+ggplot(city_data, aes(x = accommodates, y = log_price)) +
+  geom_boxplot(color = "#008C45", size = 1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by # of Guests Permitted",
+    x = "Max. # of Guests",
+    y = "Log-price"
+  )
+```
 
-### Firenze Model
 
 ```{r}
-#| label: model-checking-firenze
+#| label: rating-price
+#| fig-cap: "Relationship Between Airbnb Log-Price and Guest Rating"
 
-# model summary output
-summary(firenze_lmer)
+ggplot(city_data, aes(x = review_scores_rating, y = log_price)) +
+  geom_point(color = "#CD212A", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Log-transformed Italian Airbnb prices vs. guest rating",
+    x = "Guest Rating",
+    y = "Log-price"
+  )
+```
 
-# model anova
-anova(firenze_lmer)
+```{r}
+#| label: roomtype-price
+#| fig-cap: "Airbnb Log-Price Distribution by Room Type"
 
-# model marginal and conditional r-squared
-r.squaredGLMM(firenze_lmer)
+ggplot(city_data, aes(x = log_price)) +
+  geom_density(color = "#008C45", fill = "#83F0B9", size = 1.1) +
+  facet_grid(rows = vars(room_type)) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+    strip.text.y = element_text(angle = 0, vjust = 0.5)
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by room type",
+    x = "Log-price",
+    y = "Density"
+  )
+```
 
-# model residual vs. fitted plot
-plot(fitted(firenze_lmer), resid(firenze_lmer))
+```{r}
+#| label: superhost-price
+#| fig-cap: "Airbnb Log-Price Distribution by Superhost Status"
 
-# autocorrelation check plot
-plot(resid(firenze_lmer))
+city_data <- city_data |>
+  mutate(host_is_superhost = case_when(host_is_superhost == "t" ~ "Yes",
+                                       host_is_superhost == "f" ~ "No"))
 
-# model qq plot
+ggplot(city_data, aes(x = host_is_superhost, y = log_price)) +
+  geom_boxplot(color = "#CD212A", size = 1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by superhost status",
+    x = "Superhost?",
+    y = "Log-price"
+  )
+```
+
+```{r}
+#| label: longitude-price
+#| fig-cap: "Relationship Between Airbnb Log-Price and Relative Latitude/Longitude"
+
+long_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
+  geom_point(color = "#008C45", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+  ) +
+  labs(
+    #title = "Log-transformed Italian Airbnb prices vs. relative longitude and latitude",
+    x = "Relative longitude",
+    y = "Log-price"
+  )
+
+lat_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
+  geom_point(color = "#CD212A", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+  ) +
+  labs(
+    #title = "Log-transformed Italian Airbnb prices vs. relative latitude",
+    x = "Relative latitude",
+    y = ""
+  )
+
+(long_plot + lat_plot) + plot_annotation(title = "Log-transformed Italian Airbnb prices vs. relative latitude and longitude",
+                                         theme = theme(plot.title = element_text(face = "bold")))
+```
+
+\newpage
+
+## Model Assumptions Investigation
+
+### Florence Model
+
+```{r}
+#| label: model-checking-firenze-1
+#| fig-cap: "Residuals vs. Fitted Values, Florence Model"
+#| out-width: "3in"
+
+plot(fitted(firenze_lmer), resid(firenze_lmer),
+     xlab = "Fitted Value", ylab = "Residual")
+```
+
+```{r}
+#| label: model-checking-firenze-2
+#| fig-cap: "Residuals Autocorrelation, Florence Model"
+#| out-width: "3in"
+
+plot(resid(firenze_lmer),
+     ylab = "Residual")
+```
+
+```{r}
+#| label: model-checking-firenze-3
+#| fig-cap: "Residuals QQ Plot, Florence Model"
+#| out-width: "3in"
+
 qqnorm(resid(firenze_lmer))
 qqline(resid(firenze_lmer))
-
-# model residual density plot
-plot(density(resid(firenze_lmer)))
 ```
 
-### Milano Model
+```{r}
+#| label: model-checking-firenze-4
+#| fig-cap: "Residuals Density, Florence Model"
+#| out-width: "3in"
+
+plot(density(resid(firenze_lmer)),
+     main = "Density of residuals")
+```
+
+\newpage
+
+### Milan Model
 
 ```{r}
-#| label: model-checking-milano
+#| label: model-checking-milano-1
+#| fig-cap: "Residuals vs. Fitted Values, Milan Model"
+#| out-width: "3in"
 
-# model summary output
-summary(milano_lmer)
+plot(fitted(milano_lmer), resid(milano_lmer),
+     xlab = "Fitted Value", ylab = "Residual")
+```
 
-# model anova
-anova(milano_lmer)
+```{r}
+#| label: model-checking-milano-2
+#| fig-cap: "Residuals Autocorrelation, Milan Model"
+#| out-width: "3in"
 
-# model marginal and conditional r-squared
-r.squaredGLMM(milano_lmer)
+plot(resid(milano_lmer),
+     ylab = "Residual")
+```
 
-# model residual vs. fitted plot
-plot(fitted(milano_lmer), resid(milano_lmer))
+```{r}
+#| label: model-checking-milano-3
+#| fig-cap: "Residuals QQ Plot, Milan Model"
+#| out-width: "3in"
 
-# autocorrelation check plot
-plot(resid(milano_lmer))
-
-# model qq plot
 qqnorm(resid(milano_lmer))
 qqline(resid(milano_lmer))
-
-# model residual density plot
-plot(density(resid(milano_lmer)))
 ```
 
-### Napoli Model
+```{r}
+#| label: model-checking-milano-4
+#| fig-cap: "Residuals Density, Milan Model"
+#| out-width: "3in"
+
+plot(density(resid(milano_lmer)),
+     main = "Density of residuals")
+```
+
+\newpage
+
+### Naples Model
 
 ```{r}
-#| label: model-checking-napoli
+#| label: model-checking-napoli-1
+#| fig-cap: "Residuals vs. Fitted Values, Naples Model"
+#| out-width: "3in"
 
-# model summary output
-summary(napoli_lmer)
+plot(fitted(napoli_lmer), resid(napoli_lmer),
+     xlab = "Fitted Value", ylab = "Residual")
+```
 
-# model anova
-anova(napoli_lmer)
+```{r}
+#| label: model-checking-napoli-2
+#| fig-cap: "Residuals Autocorrelation, Naples Model"
+#| out-width: "3in"
 
-# model marginal and conditional r-squared
-r.squaredGLMM(napoli_lmer)
+plot(resid(napoli_lmer),
+     ylab = "Residual")
+```
 
-# model residual vs. fitted plot
-plot(fitted(napoli_lmer), resid(napoli_lmer))
+```{r}
+#| label: model-checking-napoli-3
+#| fig-cap: "Residuals QQ Plot, Naples Model"
+#| out-width: "3in"
 
-# autocorrelation check plot
-plot(resid(napoli_lmer))
-
-# model qq plot
 qqnorm(resid(napoli_lmer))
 qqline(resid(napoli_lmer))
-
-# model residual density plot
-plot(density(resid(napoli_lmer)))
 ```
 
-### Roma Data
+```{r}
+#| label: model-checking-napoli-4
+#| fig-cap: "Residuals Density, Naples Model"
+#| out-width: "3in"
+
+plot(density(resid(napoli_lmer)),
+     main = "Density of residuals")
+```
+
+\newpage
+
+### Rome Model
 
 ```{r}
-#| label: model-checking-roma
+#| label: model-checking-roma-1
+#| fig-cap: "Residuals vs. Fitted Values, Rome Model"
+#| out-width: "3in"
 
-# model summary output
-summary(roma_lmer)
+plot(fitted(roma_lmer), resid(roma_lmer),
+     xlab = "Fitted Value", ylab = "Residual")
+```
 
-# model anova
-anova(roma_lmer)
+```{r}
+#| label: model-checking-roma-2
+#| fig-cap: "Residuals Autocorrelation, Rome Model"
+#| out-width: "3in"
 
-# model marginal and conditional r-squared
-r.squaredGLMM(roma_lmer)
+plot(resid(roma_lmer),
+     ylab = "Residual")
+```
 
-# model residual vs. fitted plot
-plot(fitted(roma_lmer), resid(roma_lmer))
+```{r}
+#| label: model-checking-roma-3
+#| fig-cap: "Residuals QQ Plot, Rome Model"
+#| out-width: "3in"
 
-# autocorrelation check plot
-plot(resid(roma_lmer))
-
-# model qq plot
 qqnorm(resid(roma_lmer))
 qqline(resid(roma_lmer))
-
-# model residual density plot
-plot(density(resid(roma_lmer)))
 ```
 
-### Venezia Model
+```{r}
+#| label: model-checking-roma-4
+#| fig-cap: "Residuals Density, Rome Model"
+#| out-width: "3in"
+
+plot(density(resid(roma_lmer)),
+     main = "Density of residuals")
+```
+
+\newpage
+
+### Venice Model
 
 ```{r}
-#| label: model-checking-venezia
+#| label: model-checking-venezia-1
+#| fig-cap: "Residuals vs. Fitted Values, Venice Model"
+#| out-width: "3in"
 
-# model summary output
-summary(venezia_lmer)
+plot(fitted(venezia_lmer), resid(venezia_lmer),
+     xlab = "Fitted Value", ylab = "Residual")
+```
 
-# model anova
-anova(venezia_lmer)
+```{r}
+#| label: model-checking-venezia-2
+#| fig-cap: "Residuals Autocorrelation, Venice Model"
+#| out-width: "3in"
 
-# model marginal and conditional r-squared
-r.squaredGLMM(venezia_lmer)
+plot(resid(venezia_lmer),
+     ylab = "Residual")
+```
 
-# model residual vs. fitted plot
-plot(fitted(venezia_lmer), resid(venezia_lmer))
+```{r}
+#| label: model-checking-venezia-3
+#| fig-cap: "Residuals QQ Plot, Venice Model"
+#| out-width: "3in"
 
-# autocorrelation check plot
-plot(resid(venezia_lmer))
-
-# model qq plot
 qqnorm(resid(venezia_lmer))
 qqline(resid(venezia_lmer))
+```
 
-# model residual density plot
-plot(density(resid(venezia_lmer)))
+```{r}
+#| label: model-checking-venezia-4
+#| fig-cap: "Residuals Density, Venice Model"
+#| out-width: "3in"
+
+plot(density(resid(venezia_lmer)),
+     main = "Density of residuals")
 ```
 
