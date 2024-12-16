@@ -312,10 +312,21 @@ venezia_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type
                         relative_long + (1 | id), data = venezia_data)
 ```
 
+This study aims to investigate the effect of seasonality on Italian Airbnb prices, providing insight into tourism trends in the country. The analysis began by considering a range of statistical models including linear regression, mixed models, quantile regression, quantile mixed models, Bayesian approaches, and robust linear mixed models. Initially, a comprehensive linear mixed model was explored, incorporating city as a fixed effect and an interaction term between city and season to capture local and temporal variations in Airbnb pricing. The model also used the listing ID as a random intercept to account for unobserved heterogeneity within listings. However, the model yielded relatively weak marginal and conditional $R^2$ values, suggesting that the model might not be effectively capturing the underlying patterns.
 
-These new measures allowed us to incorporate location relative to city center, which seemed highly relevant in the context of modeling Airbnb prices. In general, one might expect that the closer a listing is to the center of a city, the higher the price ought to be, due to 
+Consequently, the strategy was refined to fit separate linear mixed models for each of the five cities in the dataset—Florence, Milan, Naples, Rome, and Venice. Similar to the comprehensive model, each city-specific model used the listing ID as a random intercept, while the maximum guest capacity, aggregate review scores, room type, "superhost" status, relative coordinates of the listing, and the season at the time of data collection were used as the fixed effects. This approach simplified the models by reducing the number of predictors and focusing on city-specific trends, leading to more robust and interpretable results.
+
+These variables used in the final model were selected through a combination of exploratory data analysis and domain knowledge. Variables were chosen based on their potential to explain variability in Airbnb pricing. The original plan included using the neighborhood as a predictor, but due to the inconsistent number of neighborhoods across cities and the resulting complexity, this was replaced with relative latitude and longitude measures. These measures standardized location data within each city, reducing model complexity while preserving important spatial information.
+
+The intended response variable, price, exhibited extreme right-skewness, leading to extreme heteroscedasticity in the modeling process. A log transformation was applied to price, significantly mitigating heteroscedasticity and normalizing the distribution. This transformation was crucial for stabilizing variance and improving the interpretability of the model's output, though it did not completely eliminate heteroscedasticity. The remaining effects and their implications are discussed in Model Assumptions.
+
+The selected model framework of a mixed linear model allows for detailed analysis of how seasonality influences Airbnb prices, adjusting for individual listing characteristics and broader geographic factors. This modeling approach enhances our understanding of pricing dynamics in the Airbnb market and provides valuable insights into factors that drive price variations.
 
 ## 2.2 Model Assumptions
+
+For a linear mixed effect model to work, the assumptions are that the explanatory variables are related linearly to the response, the errors have constant variance, the errors are independent, the errors are Normally distributed, and there is little to no multicollinearity. For the purposes of this analysis, we are assuming that there indeed exists a linear relationship between the predictors chosen and the log of price of an Airbnb, which may or may not be true in reality. For all of the other conditions, certain visualizations and statistics were produced to inspect whether they hold true, each time being done separately for each model. All of the plots hereafter referred to are available in the appendix. To check the assumption of constant variance, a scatterplot of the fitted values versus the residual values was created. For each of the five cities, the plot of residuals against fitted values yielded horizontally spread clouds of data, with a slight fan-shape opening toward higher-fitted variables. This pattern was consistent across the cities, and is indicative of a potential violation of heteroskedasticity, a major flaw in the model. To check the assumption of independent error terms, the residual values were plotted by index to ensure no autocorrelation or seasonal patterns. These plots did not seem to cause concern for any of the 5 models. For the next condition of the errors having a Normal distribution, QQ-plots and density curves of the residuals were both output. While the density curves for the models appear normal to the naked eye, further inspection of the QQ-plots reveals the heavy-tailed nature of the distribution of residuals, and thus break from Normality. This is again a major flaw with the models fit, and was observed consistently across the five cities. Lastly, to check for the presence of multicollinearity, correlation matrices for the fixed effects were output for each model. One area of concern was high correlation between room type (in particular, private room or shared room) and maximum guests allowed. However, our correlation matrix analysis revealed that all predictors, including those of concern, had absolute correlation values of well below 0.7 - a commonly accepted threshold for a low risk of multicollinearity. 
+
+Given the violations of homoskedasticity and normality of errors, as mentioned prior, numerous other approaches were attempted in order to reduce concerns associated with violations in model conditions. These approaches included, but were not limited to multiple linear regression, quantile regression, quantile mixed models, Bayesian approaches, and robust linear mixed models. All of these approaches were aimed at solving the issue of increasing variance of residuals at higher fitted values, leading to a heavy-tailed distribution of the residuals themselves. While these attempts were unsuccessful either due to the structure of the data (high number of random effects groups relative to the total number of observations) or limited domain knowledge to experiment fully with robust linear mixed models or Bayesian methods, there is certainly room for further improvement as will be discussed later in the report. Furthermore, all results from the model will be interpreted with caution due to the flaws in meeting the model criteria.
 
 # 3. Results
 
@@ -332,6 +343,12 @@ https://www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insi
 https://www.statista.com/forecasts/1000846/hotel-private-accommodation-online-bookings-by-brand-in-italy
 
 https://www.kaggle.com/datasets/salvatoremarcello/italian-airbnb-dataset?select=airbnb.csv
+
+https://yihui.org/knitr/options/#chunk-options
+
+https://patchwork.data-imaginist.com/articles/guides/annotation.html
+
+https://www.st-andrews.ac.uk/media/ceed/students/mathssupport/mixedeffectsknir.pdf
 
 *Put citations here*
 
@@ -483,6 +500,9 @@ r.squaredGLMM(firenze_lmer)
 # model residual vs. fitted plot
 plot(fitted(firenze_lmer), resid(firenze_lmer))
 
+# autocorrelation check plot
+plot(resid(firenze_lmer))
+
 # model qq plot
 qqnorm(resid(firenze_lmer))
 qqline(resid(firenze_lmer))
@@ -507,6 +527,9 @@ r.squaredGLMM(milano_lmer)
 
 # model residual vs. fitted plot
 plot(fitted(milano_lmer), resid(milano_lmer))
+
+# autocorrelation check plot
+plot(resid(milano_lmer))
 
 # model qq plot
 qqnorm(resid(milano_lmer))
@@ -533,6 +556,9 @@ r.squaredGLMM(napoli_lmer)
 # model residual vs. fitted plot
 plot(fitted(napoli_lmer), resid(napoli_lmer))
 
+# autocorrelation check plot
+plot(resid(napoli_lmer))
+
 # model qq plot
 qqnorm(resid(napoli_lmer))
 qqline(resid(napoli_lmer))
@@ -557,6 +583,9 @@ r.squaredGLMM(roma_lmer)
 
 # model residual vs. fitted plot
 plot(fitted(roma_lmer), resid(roma_lmer))
+
+# autocorrelation check plot
+plot(resid(roma_lmer))
 
 # model qq plot
 qqnorm(resid(roma_lmer))
@@ -583,36 +612,14 @@ r.squaredGLMM(venezia_lmer)
 # model residual vs. fitted plot
 plot(fitted(venezia_lmer), resid(venezia_lmer))
 
+# autocorrelation check plot
+plot(resid(venezia_lmer))
+
 # model qq plot
 qqnorm(resid(venezia_lmer))
 qqline(resid(venezia_lmer))
 
 # model residual density plot
 plot(density(resid(venezia_lmer)))
-```
-
-### All Cities Model
-
-```{r}
-#| label: model-checking-all
-
-# model summary output
-summary(city_lmer)
-
-# model anova
-anova(city_lmer)
-
-# model marginal and conditional r-squared
-r.squaredGLMM(city_lmer)
-
-# model residual vs. fitted plot
-plot(fitted(city_lmer), resid(city_lmer))
-
-# model qq plot
-qqnorm(resid(city_lmer))
-qqline(resid(city_lmer))
-
-# model residual density plot
-plot(density(resid(city_lmer)))
 ```
 
