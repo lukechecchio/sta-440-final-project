@@ -18,6 +18,9 @@ execute:
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(sf))
+suppressPackageStartupMessages(library(lme4))
+suppressPackageStartupMessages(library(MuMIn))
+suppressPackageStartupMessages(library(patchwork))
 ```
 
 ```{r}
@@ -57,6 +60,8 @@ city_data <- city_data |>
   group_by(place) |>
   mutate(relative_lat = abs(latitude - mean(latitude)), relative_long = abs(longitude - mean(longitude)))
 
+city_data$log_price <- log(city_data$price)
+
 firenze_data <- city_data |> filter(place == "firenze")
 milano_data <- city_data |> filter(place == "milano")
 napoli_data <- city_data |> filter(place == "napoli")
@@ -66,9 +71,20 @@ venezia_data <- city_data |> filter(place == "venezia")
 
 Data in this study were scraped from Airbnb's website on a quarterly basis from December 2023 to September 2024, with each round of data collection corresponding to one season in the dataset. The five major cities included in this analysis were Florence, Milan, Naples, Rome, and Venice; within each round of scraping, all Airbnb listings within the metropolitan area were recorded according to a unique identifier. This identifier remained the same across all data collection rounds, so that observations from the same listing could easily be recognized. Along with the listing identifier, the price at time of scraping, host's "superhost" status (used by Airbnb to identify and promote outstanding hosts), neighbourhood and coordinates of the listing, room type, max possible guests, review rating, city, and season were identified, among other variables. In all, 245,035 separate entries were recorded, across 89,306 totally Airbnb listings.
 
-* Paragraph on data set modifications *
+Several modifications were made to the dataset to make for an easier analysis of the relevant variables. First, the response variable of interest, price, was heavily right-skewed with some extreme high outliers (as well as low outliers, albeit less extreme); to address this issue, the price variable underwent a log transformation. Upon transforming the price in this way, it followed a distribution that was much more suitable for regression (see further details in Exploratory Analysis and Appendix). Furthermore, while it seemed important to include location in our analysis, it was initially unclear what the best way to go about this would be. The neighbourhood variable presented a convenient way of grouping Airbnb's in a similar geographic location within a city, but the number of neighbourhoods varied wildly across the 5 cities and quickly could quickly become unwwieldy if attempting to encode each as it's own predictor, with as many as 114 neighbourhoods in a single city, as was the case with Venice. For this reason, it was decided to adopt a single standardized form of incorporating location data within a city, termed relative latitude and relative longitude. These measures recorded the absolute deviation from the average latitude and longitude for all Airbnbs within the same city respectively. 
 
 ## 1.3 Exploratory Analysis
+
+```{r}
+#| label: response-distribution
+
+# change to ggplot
+price <- plot(density(city_data$price))
+log_price <- plot(density(city_data$log_price))
+
+price + log_price
+```
+
 
 # 2. Methodology
 
@@ -77,20 +93,22 @@ Data in this study were scraped from Airbnb's website on a quarterly basis from 
 ```{r}
 #| label: model-fitting
 
-city_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+city_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + place + period*place + (1 | id), data = city_data)
-firenze_lmer <- lmer(log(sqrt(price)) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+firenze_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = firenze_data)
-milano_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+milano_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = milano_data)
-napoli_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+napoli_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = napoli_data)
-roma_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+roma_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = roma_data)
-venezia_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+venezia_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
                         relative_long + (1 | id), data = venezia_data)
 ```
 
+
+These new measures allowed us to incorporate location relative to city center, which seemed highly relevant in the context of modeling Airbnb prices. In general, one might expect that the closer a listing is to the center of a city, the higher the price ought to be, due to 
 
 ## 2.2 Model Assumptions
 
@@ -105,6 +123,10 @@ venezia_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_typ
 ## References
 
 https://www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insights/now-boarding-faces-places-and-trends-shaping-tourism-in-2024
+
+https://www.statista.com/forecasts/1000846/hotel-private-accommodation-online-bookings-by-brand-in-italy
+
+https://www.kaggle.com/datasets/salvatoremarcello/italian-airbnb-dataset?select=airbnb.csv
 
 *Put citations here*
 
