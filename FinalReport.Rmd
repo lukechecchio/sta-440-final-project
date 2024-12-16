@@ -38,7 +38,11 @@ neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geoj
 
 ## 1.1 Motivation
 
+After dropping to historic lows in the midst of the COVID-19 pandemic, travel is well on track to recover to pre-2020 levels. These trends show no sign of a slowing, and by 2030, international travel is expected to reach 9 billion lodging nights per year (McKinsey & Company).Since the advent of Airbnb, the landscape of short-term lodging and tourism has transformed dramatically, providing an unprecedented array of choices for travelers and a novel source of income for property owners. Italy, with its rich cultural heritage and popular tourist destinations, has seen significant growth in Airbnb listings, particularly in major cities and tourist hubs. In fact, today, Airbnb accounts for the second largest share of online bookings within the country, at a nearly 30% market share (Statista). The dynamics of pricing within the Italian Airbnb market, however, remain complex and subject to various influences, including seasonal fluctuations which significantly impact both availability and cost.
 
+The interplay between seasonality and pricing is critical in tourism-centric economies like Italy's, where different regions experience peak tourist seasons at various times of the year. For example, coastal areas see a surge during summer months, while cities rich in art and history, such as Florence and Rome, typically can attract visitors year-round. Understanding these patterns is essential not only for economic forecasting and business planning for hosts but also for policy-making in tourism management.
+
+This research project aims to delve into the seasonal trends in Airbnb pricing across Italy, exploring connections across 5 major Italian tourist hubs. By analyzing a comprehensive dataset of Airbnb listings that includes detailed pricing information, review scores, host details, and more from December 2023 to September 2024, this study seeks to uncover insights that could inform more strategic pricing and marketing decisions for Airbnb hosts and provide policymakers with data to better understand the economics of short-term rentals. The findings aim to contribute to the broader discourse on sustainable tourism in Italy, balancing economic benefits with community impacts and long-term viability.
 
 ## 1.2 Dataset and Variables
 
@@ -60,6 +64,9 @@ roma_data <- city_data |> filter(place == "roma")
 venezia_data <- city_data |> filter(place == "venezia")
 ```
 
+Data in this study were scraped from Airbnb's website on a quarterly basis from December 2023 to September 2024, with each round of data collection corresponding to one season in the dataset. The five major cities included in this analysis were Florence, Milan, Naples, Rome, and Venice; within each round of scraping, all Airbnb listings within the metropolitan area were recorded according to a unique identifier. This identifier remained the same across all data collection rounds, so that observations from the same listing could easily be recognized. Along with the listing identifier, the price at time of scraping, host's "superhost" status (used by Airbnb to identify and promote outstanding hosts), neighbourhood and coordinates of the listing, room type, max possible guests, review rating, city, and season were identified, among other variables. In all, 245,035 separate entries were recorded, across 89,306 totally Airbnb listings.
+
+* Paragraph on data set modifications *
 
 ## 1.3 Exploratory Analysis
 
@@ -96,6 +103,8 @@ venezia_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_typ
 # Appendix
 
 ## References
+
+https://www.mckinsey.com/industries/travel-logistics-and-infrastructure/our-insights/now-boarding-faces-places-and-trends-shaping-tourism-in-2024
 
 *Put citations here*
 
