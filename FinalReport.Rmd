@@ -22,7 +22,7 @@ suppressPackageStartupMessages(library(MuMIn))
 suppressPackageStartupMessages(library(patchwork))
 suppressPackageStartupMessages(library(knitr))
 
-opts_chunk$set(echo = F, warning = F, message = F, fig.show = "asis")
+opts_chunk$set(echo = F, warning = F, message = F, fig.width = 4, fig.height = 3, fig.show = "asis")
 ```
 
 ```{r}
@@ -86,10 +86,10 @@ Initial exploratory data analysis was conducted on a number of variables from th
 
 ```{r}
 #| label: response-distribution
-#| fig.cap: "Log-Transformed Airbnb Price Distribution"
+#| fig.cap: "Airbnb Log-Price Distribution"
 
 ggplot(city_data, aes(x = log_price)) +
-  geom_density(color = "#008C45", fill = "#CD212A", size = 1.2) +
+  geom_density(color = "#008C45", fill = "#83F0B9", size = 1.1) +
   theme_minimal() +
   theme(
     plot.background = element_rect(fill = "#FFFFFF", color = NA),
@@ -100,7 +100,7 @@ ggplot(city_data, aes(x = log_price)) +
   ) +
   labs(
     title = "Distribution of Log-transformed Airbnb prices in Italy",
-    x = "Log of Price",
+    x = "Log-price",
     y = "Density"
   )
 ```
@@ -141,18 +141,155 @@ ggplot(grouped_neighbourhoods_full |> filter(city == "roma")) +
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
-    plot.title = element_text(face = "bold") ,
+    plot.title = element_text(face = "bold"),
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank()
   ) +
   labs(
     title = "Neighbourhood median Airbnb price by season, Rome",
-    fill = "Median Price (Euro)"
+    fill = "Median price (Euro)"
   )
 ```
 
 The above plot displays a series of adjacent maps illustrating the median Airbnb prices by neighborhood across different seasons in Rome. The maps use a color gradient from light pink to dark red to depict the range of median prices in euros, with darker shades indicating higher prices. From the visualization, it seems that across most neighbourhoods, the median price tends to be higher in Spring, Summer, and Fall than Winter. This relationship is especially prevalent within the center-most neighbourhood, the Historic Center (Centro Historico), which turns noticeably darker in the Summer and Fall, indicating higher median Airbnb prices. Graphs similar to that which is displayed above are included in the appendix for the four other cities examined. The relationship between season and price was less obvious in the plots for Napoli and Milan, while Florence and Venice's graphs both exhibited characteristics similar to that observed in Rome's.
+
+```{r}
+#| label: guests-price
+#| fig-cap: "Airbnb Log-Price Distribution by Maximum Guests Allowed"
+
+city_data$accommodates <- factor(city_data$accommodates, levels = c(1:16))
+
+ggplot(city_data, aes(x = accommodates, y = log_price)) +
+  geom_boxplot(color = "#008C45", size = 1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by # of Guests Permitted",
+    x = "Max. # of Guests",
+    y = "Log-price"
+  )
+```
+
+
+```{r}
+#| label: rating-price
+#| fig-cap: "Relationship Between Airbnb Log-Price and Guest Rating"
+
+ggplot(city_data, aes(x = review_scores_rating, y = log_price)) +
+  geom_point(color = "#CD212A", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Log-transformed Italian Airbnb prices vs. guest rating",
+    x = "Guest Rating",
+    y = "Log-price"
+  )
+```
+
+```{r}
+#| label: roomtype-price
+#| fig-cap: "Airbnb Log-Price Distribution by Room Type"
+
+city_data <- city_data |>
+  mutate(room_type = case_when(room_type == "entire home/apt" ~ "Entire Home/Apartment",
+                               room_type == "private room" ~ "Private Room",
+                               room_type == "hotel room" ~ "Hotel Room",
+                               room_type == "shared room" ~ "Shared Room"))
+
+ggplot(city_data, aes(x = log_price)) +
+  geom_density(color = "#008C45", fill = "#83F0B9", size = 1.1) +
+  facet_grid(rows = vars(room_type)) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+    strip.text.y = element_text(angle = 0, vjust = 0.5)
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by room type",
+    x = "Log-price",
+    y = "Density"
+  )
+```
+
+```{r}
+#| label: superhost-price
+#| fig-cap: "Airbnb Log-Price Distribution by Superhost Status"
+
+city_data <- city_data |>
+  mutate(host_is_superhost = case_when(host_is_superhost == "t" ~ "Yes",
+                                       host_is_superhost == "f" ~ "No"))
+
+ggplot(city_data, aes(x = host_is_superhost, y = log_price)) +
+  geom_boxplot(color = "#CD212A", size = 1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(face = "bold"),
+  ) +
+  labs(
+    title = "Distribution of Log-transformed Airbnb prices in Italy, by superhost status",
+    x = "Superhost?",
+    y = "Log-price"
+  )
+```
+
+```{r}
+#| label: longitude-price
+#| fig-cap: "Relationship Between Airbnb Log-Price and Relative Longitude/Latitude"
+
+long_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
+  geom_point(color = "#008C45", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+  ) +
+  labs(
+    #title = "Log-transformed Italian Airbnb prices vs. relative longitude and latitude",
+    x = "Relative longitude",
+    y = "Log-price"
+  )
+
+lat_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
+  geom_point(color = "#CD212A", alpha = 0.1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+  ) +
+  labs(
+    #title = "Log-transformed Italian Airbnb prices vs. relative latitude",
+    x = "Relative latitude",
+    y = ""
+  )
+
+(long_plot + lat_plot) + plot_annotation(title = "Log-transformed Italian Airbnb prices vs. relative longitude and latitude",
+                                         theme = theme(plot.title = element_text(face = "bold")))
+```
 
 # 2. Methodology
 
