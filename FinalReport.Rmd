@@ -255,9 +255,9 @@ ggplot(city_data, aes(x = host_is_superhost, y = log_price)) +
 
 ```{r}
 #| label: longitude-price
-#| fig-cap: "Relationship Between Airbnb Log-Price and Relative Longitude/Latitude"
+#| fig-cap: "Relationship Between Airbnb Log-Price and Relative Latitude/Longitude"
 
-long_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
+long_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
   geom_point(color = "#008C45", alpha = 0.1) +
   theme_minimal() +
   theme(
@@ -272,7 +272,7 @@ long_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
     y = "Log-price"
   )
 
-lat_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
+lat_plot <- ggplot(city_data, aes(x = relative_long, y = log_price)) +
   geom_point(color = "#CD212A", alpha = 0.1) +
   theme_minimal() +
   theme(
@@ -287,7 +287,7 @@ lat_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
     y = ""
   )
 
-(long_plot + lat_plot) + plot_annotation(title = "Log-transformed Italian Airbnb prices vs. relative longitude and latitude",
+(long_plot + lat_plot) + plot_annotation(title = "Log-transformed Italian Airbnb prices vs. relative latitude and longitude",
                                          theme = theme(plot.title = element_text(face = "bold")))
 ```
 
@@ -298,18 +298,16 @@ lat_plot <- ggplot(city_data, aes(x = relative_lat, y = log_price)) +
 ```{r}
 #| label: model-fitting
 
-city_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + place + period*place + (1 | id), data = city_data)
-firenze_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = firenze_data)
-milano_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = milano_data)
-napoli_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = napoli_data)
-roma_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = roma_data)
-venezia_lmer <- lmer(log_price ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
-                        relative_long + (1 | id), data = venezia_data)
+firenze_lmer <- lmer(log_price ~ (1 | id) + accommodates + review_scores_rating + room_type + host_is_superhost + 
+                       relative_lat + relative_long + period, data = firenze_data)
+milano_lmer <- lmer(log_price ~ (1 | id) + accommodates + review_scores_rating + room_type + host_is_superhost + 
+                      relative_lat + relative_long + period, data = milano_data)
+napoli_lmer <- lmer(log_price ~ (1 | id) + accommodates + review_scores_rating + room_type + host_is_superhost + 
+                      relative_lat + relative_long + period, data = napoli_data)
+roma_lmer <- lmer(log_price ~ (1 | id) + accommodates + review_scores_rating + room_type + host_is_superhost + 
+                    relative_lat + relative_long + period, data = roma_data)
+venezia_lmer <- lmer(log_price ~ (1 | id) + accommodates + review_scores_rating + room_type + host_is_superhost + 
+                       relative_lat + relative_long + period, data = venezia_data)
 ```
 
 This study aims to investigate the effect of seasonality on Italian Airbnb prices, providing insight into tourism trends in the country. The analysis began by considering a range of statistical models including linear regression, mixed models, quantile regression, quantile mixed models, Bayesian approaches, and robust linear mixed models. Initially, a comprehensive linear mixed model was explored, incorporating city as a fixed effect and an interaction term between city and season to capture local and temporal variations in Airbnb pricing. The model also used the listing ID as a random intercept to account for unobserved heterogeneity within listings. However, the model yielded relatively weak marginal and conditional $R^2$ values, suggesting that the model might not be effectively capturing the underlying patterns.
@@ -329,6 +327,83 @@ For a linear mixed effect model to work, the assumptions are that the explanator
 Given the violations of homoskedasticity and normality of errors, as mentioned prior, numerous other approaches were attempted in order to reduce concerns associated with violations in model conditions. These approaches included, but were not limited to multiple linear regression, quantile regression, quantile mixed models, Bayesian approaches, and robust linear mixed models. All of these approaches were aimed at solving the issue of increasing variance of residuals at higher fitted values, leading to a heavy-tailed distribution of the residuals themselves. While these attempts were unsuccessful either due to the structure of the data (high number of random effects groups relative to the total number of observations) or limited domain knowledge to experiment fully with robust linear mixed models or Bayesian methods, there is certainly room for further improvement as will be discussed later in the report. Furthermore, all results from the model will be interpreted with caution due to the flaws in meeting the model criteria.
 
 # 3. Results
+
+*Intro Paragraph(s)*
+
+```{r}
+#| label: firenze-model-results
+
+firenze_summary <- summary(firenze_lmer)
+firenze_coef <- firenze_summary$coefficients
+rownames(firenze_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Summer", "Season | Winter")
+firenze_coef <- as.data.frame(firenze_coef) |> round(3) |> rownames_to_column("Variable")
+
+
+firenze_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+```
+
+*Interpretation*
+
+```{r}
+#| label: milano-model-results
+
+milano_summary <- summary(milano_lmer)
+milano_coef <- milano_summary$coefficients
+rownames(milano_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Summer", "Season | Winter")
+milano_coef <- as.data.frame(milano_coef) |> round(3) |> rownames_to_column("Variable")
+
+
+milano_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+```
+
+*Interpretation*
+
+```{r}
+#| label: napoli-model-results
+
+napoli_summary <- summary(napoli_lmer)
+napoli_coef <- napoli_summary$coefficients
+rownames(napoli_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Summer", "Season | Winter")
+napoli_coef <- as.data.frame(napoli_coef) |> round(3) |> rownames_to_column("Variable")
+
+
+napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+```
+
+*Interpretation*
+
+```{r}
+#| label: roma-model-results
+
+roma_summary <- summary(roma_lmer)
+roma_coef <- roma_summary$coefficients
+rownames(roma_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Spring", "Season | Summer", "Season | Winter")
+roma_coef <- as.data.frame(roma_coef) |> round(3) |> rownames_to_column("Variable")
+
+
+roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+```
+
+*Interpretation*
+
+```{r}
+#| label: venezia-model-results
+
+venezia_summary <- summary(venezia_lmer)
+venezia_coef <- venezia_summary$coefficients
+rownames(venezia_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Spring", "Season | Summer", "Season | Winter")
+venezia_coef <- as.data.frame(venezia_coef) |> round(3) |> rownames_to_column("Variable")
+
+
+venezia_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+```
+
+*Interpretation*
 
 # 4. Discussion
 
