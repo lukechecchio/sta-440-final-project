@@ -26,25 +26,64 @@ suppressPackageStartupMessages(library(sf))
 #| warning: FALSE
 #| messages: FALSE
 
-city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv")
-neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv")
-city_neighbourhoods <- read.csv("data/airbnb_italy_city_neighbourhoods.csv")
-city_data <- read.csv("data/airbnb_italy_city.csv")
-region_data <- read.csv("data/airbnb_italy_region.csv")
-neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson", quiet = T)
+city_grouped <- read.csv("data/airbnb_italian_city_grouped.csv") # good for EDA
+neighbourhood_grouped <- read.csv("data/airbnb_italian_neighbourhood_grouped.csv") # good for EDA
+city_data <- read.csv("data/airbnb_italy_city.csv") |>
+  mutate(across(where(is.character), str_to_lower))
+neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geojson", quiet = T) |>
+  mutate(across(where(is.character), str_to_lower))
 ```
 
 # 1. Introduction
 
 ## 1.1 Motivation
 
+
+
 ## 1.2 Dataset and Variables
+
+```{r}
+#| label: data-modification-split
+
+city_data <- city_data |>
+  group_by(id) |>
+  mutate(relative_price = price / mean(price), prop_reviews = number_of_reviews / sum(number_of_reviews), n = n())
+
+city_data <- city_data |>
+  group_by(place) |>
+  mutate(relative_lat = abs(latitude - mean(latitude)), relative_long = abs(longitude - mean(longitude)))
+
+firenze_data <- city_data |> filter(place == "firenze")
+milano_data <- city_data |> filter(place == "milano")
+napoli_data <- city_data |> filter(place == "napoli")
+roma_data <- city_data |> filter(place == "roma")
+venezia_data <- city_data |> filter(place == "venezia")
+```
+
 
 ## 1.3 Exploratory Analysis
 
 # 2. Methodology
 
 ## 2.1 Model and Variable Selection
+
+```{r}
+#| label: model-fitting
+
+city_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + place + period*place + (1 | id), data = city_data)
+firenze_lmer <- lmer(log(sqrt(price)) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = firenze_data)
+milano_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = milano_data)
+napoli_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = napoli_data)
+roma_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = roma_data)
+venezia_lmer <- lmer(log(price) ~ accommodates + review_scores_rating + room_type + host_is_superhost + period + relative_lat + 
+                        relative_long + (1 | id), data = venezia_data)
+```
+
 
 ## 2.2 Model Assumptions
 
@@ -58,6 +97,161 @@ neighborhoods_geo <- st_read("data/airbnb_italy_city_neighbourhoods_geojson.geoj
 
 ## References
 
+*Put citations here*
+
 ## Additional Exploratory Data Analysis
 
-## Model Assumption Investigation
+*Put EDA here*
+
+## Model Investigation
+
+### Firenze Model
+
+```{r}
+#| label: model-checking-firenze
+
+# model summary output
+summary(firenze_lmer)
+
+# model anova
+anova(firenze_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(firenze_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(firenze_lmer), resid(firenze_lmer))
+
+# model qq plot
+qqnorm(resid(firenze_lmer))
+qqline(resid(firenze_lmer))
+
+# model residual density plot
+plot(density(resid(firenze_lmer)))
+```
+
+### Milano Model
+
+```{r}
+#| label: model-checking-milano
+
+# model summary output
+summary(milano_lmer)
+
+# model anova
+anova(milano_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(milano_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(milano_lmer), resid(milano_lmer))
+
+# model qq plot
+qqnorm(resid(milano_lmer))
+qqline(resid(milano_lmer))
+
+# model residual density plot
+plot(density(resid(milano_lmer)))
+```
+
+### Napoli Model
+
+```{r}
+#| label: model-checking-napoli
+
+# model summary output
+summary(napoli_lmer)
+
+# model anova
+anova(napoli_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(napoli_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(napoli_lmer), resid(napoli_lmer))
+
+# model qq plot
+qqnorm(resid(napoli_lmer))
+qqline(resid(napoli_lmer))
+
+# model residual density plot
+plot(density(resid(napoli_lmer)))
+```
+
+### Roma Data
+
+```{r}
+#| label: model-checking-roma
+
+# model summary output
+summary(roma_lmer)
+
+# model anova
+anova(roma_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(roma_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(roma_lmer), resid(roma_lmer))
+
+# model qq plot
+qqnorm(resid(roma_lmer))
+qqline(resid(roma_lmer))
+
+# model residual density plot
+plot(density(resid(roma_lmer)))
+```
+
+### Venezia Model
+
+```{r}
+#| label: model-checking-venezia
+
+# model summary output
+summary(venezia_lmer)
+
+# model anova
+anova(venezia_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(venezia_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(venezia_lmer), resid(venezia_lmer))
+
+# model qq plot
+qqnorm(resid(venezia_lmer))
+qqline(resid(venezia_lmer))
+
+# model residual density plot
+plot(density(resid(venezia_lmer)))
+```
+
+### All Cities Model
+
+```{r}
+#| label: model-checking-all
+
+# model summary output
+summary(city_lmer)
+
+# model anova
+anova(city_lmer)
+
+# model marginal and conditional r-squared
+r.squaredGLMM(city_lmer)
+
+# model residual vs. fitted plot
+plot(fitted(city_lmer), resid(city_lmer))
+
+# model qq plot
+qqnorm(resid(city_lmer))
+qqline(resid(city_lmer))
+
+# model residual density plot
+plot(density(resid(city_lmer)))
+```
+
