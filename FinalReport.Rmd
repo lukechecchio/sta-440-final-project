@@ -65,6 +65,14 @@ city_data <- city_data |>
 
 city_data$log_price <- log(city_data$price)
 
+city_data <- city_data |>
+  mutate(period = case_when(period == "early spring" ~ "Spring",
+                            period == "early autumn" ~ "Fall",
+                            period == "early summer" ~ "Summer",
+                            period == "early winter" ~ "Winter"))
+
+city_data$period <- factor(city_data$period, levels = c("Spring", "Summer", "Fall", "Winter"))
+
 firenze_data <- city_data |> filter(place == "firenze")
 milano_data <- city_data |> filter(place == "milano")
 napoli_data <- city_data |> filter(place == "napoli")
@@ -152,7 +160,7 @@ ggplot(grouped_neighbourhoods_full |> filter(city == "roma")) +
   )
 ```
 
-The above plot displays a series of adjacent maps illustrating the median Airbnb prices by neighborhood across different seasons in Rome. The maps use a color gradient from light pink to dark red to depict the range of median prices in euros, with darker shades indicating higher prices. From the visualization, it seems that across most neighbourhoods, the median price tends to be higher in Spring, Summer, and Fall than Winter. This relationship is especially prevalent within the center-most neighbourhood, the Historic Center (Centro Historico), which turns noticeably darker in the Summer and Fall, indicating higher median Airbnb prices. Graphs similar to that which is displayed above are included in the appendix for the four other cities examined. The relationship between season and price was less obvious in the plots for Napoli and Milan, while Florence and Venice's graphs both exhibited characteristics similar to that observed in Rome's.
+The above plot displays a series of adjacent maps illustrating the median Airbnb prices by neighborhood across different seasons in Rome. The maps use a color gradient from light pink to dark red to depict the range of median prices in euros, with darker shades indicating higher prices. From the visualization, it seems that across most neighbourhoods, the median price tends to be higher in spring, summer, and fall than winter. This relationship is especially prevalent within the center-most neighbourhood, the Historic Center (Centro Historico), which turns noticeably darker in the summer and fall, indicating higher median Airbnb prices. Graphs similar to that which is displayed above are included in the appendix for the four other cities examined. The relationship between season and price was less obvious in the plots for Napoli and Milan, while Florence and Venice's graphs both exhibited characteristics similar to that observed in Rome's.
 
 ```{r}
 #| label: guests-price
@@ -328,7 +336,9 @@ Given the violations of homoskedasticity and normality of errors, as mentioned p
 
 # 3. Results
 
-*Intro Paragraph(s)*
+The below tables showcase the results from the five city models. In particular, the tables contain the point estimates, standard errors, and test statistics for each of the fixed effects for the five models. Notice that the p-value is not provided, due to the fact that the degrees of freedom on the underlying distribution for each coefficient can be very hard to calculate. This is caused by the complex structure of mixed effects models, and as complexity increases the degrees of freedom become increasingly hard to categorize. However, given that our data uses solely a random intercept term, and the extremely high quantity of data, it is very likely that statistics with absolute values greater than 2 are indeed significant at the $\alpha = 0.05$ level, and can be casually interpreted as such (Baayen et al., 2008). 
+
+With that in mind, our discussion of results will focus primarily on the season variables, in order to effectively answer our research question. However, it should be noted that there are indeed interesting and significant findings when it comes to the other predictors that were adjusted for in the model fitting.
 
 ```{r}
 #| label: firenze-model-results
@@ -340,10 +350,10 @@ rownames(firenze_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Ro
 firenze_coef <- as.data.frame(firenze_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-firenze_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+firenze_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
 ```
 
-*Interpretation*
+The coefficient of 0.117 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Florence in the summer is expected to be 0.117 units higher than in the spring, or a $e^{0.117} - 1 \approx 12.4\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.125 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Florence in the winter is expected to be 0.125 units lower than in the spring, or a $e^{-0.125} - 1 \approx -11.8\%$ decrease in the price in Euros relative to spring.
 
 ```{r}
 #| label: milano-model-results
@@ -355,10 +365,10 @@ rownames(milano_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Roo
 milano_coef <- as.data.frame(milano_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-milano_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+milano_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
 ```
 
-*Interpretation*
+The coefficient of 0.037 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Milan in the summer is expected to be 0.037 units higher than in the spring, or a $e^{0.037} - 1 \approx 3.4\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.021 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Milan in the winter is expected to be 0.021 units lower than in the spring, or a $e^{-0.021} - 1 \approx -2.1\%$ decrease in the price in Euros relative to spring.
 
 ```{r}
 #| label: napoli-model-results
@@ -370,10 +380,10 @@ rownames(napoli_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Roo
 napoli_coef <- as.data.frame(napoli_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
 ```
 
-*Interpretation*
+The coefficient of 0.025 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Naples in the summer is expected to be 0.025 units higher than in the spring, or a $e^{0.025} - 1 \approx 2.5\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.016 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Naples in the winter is expected to be 0.016 units lower than in the spring, or a $e^{-0.016} - 1 \approx -1.6\%$ decrease in the price in Euros relative to spring.
 
 ```{r}
 #| label: roma-model-results
@@ -381,14 +391,14 @@ napoli_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statis
 roma_summary <- summary(roma_lmer)
 roma_coef <- roma_summary$coefficients
 rownames(roma_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
-                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Spring", "Season | Summer", "Season | Winter")
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Summer", "Season | Fall", "Season | Winter")
 roma_coef <- as.data.frame(roma_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
 ```
 
-*Interpretation*
+The coefficient of 0.137 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the summer is expected to be 0.137 units higher than in the spring, or a $e^{0.137} - 1 \approx 14.7\%$ increase in the price in Euros relative to spring. In a similar fashion, the coefficient of 0.122 for fall in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the fall is expected to be 0.122 units higher than in the spring, or a $e^{0.122} - 1 \approx 13.0\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.141 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the winter is expected to be 0.141 units lower than in the spring, or a $e^{-0.141} - 1 \approx -13.2\%$ decrease in the price in Euros relative to spring.
 
 ```{r}
 #| label: venezia-model-results
@@ -396,16 +406,24 @@ roma_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statisti
 venezia_summary <- summary(venezia_lmer)
 venezia_coef <- venezia_summary$coefficients
 rownames(venezia_coef) <- c("Intercept", "Max. Guests", "Avg. Review Score", "Room Type | Hotel", "Room Type | Private", "Room Type | Shared",
-                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Spring", "Season | Summer", "Season | Winter")
+                         "Superhost Status", "Relative Latitude", "Relative Longitude", "Season | Summer", "Season | Fall", "Season | Winter")
 venezia_coef <- as.data.frame(venezia_coef) |> round(3) |> rownames_to_column("Variable")
 
 
-venezia_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "Statistic"))
+venezia_coef |> kable(col.names = c("Variable", "Estimate", "Std. Error", "df", "Statistic", "p"))
 ```
 
-*Interpretation*
+The coefficient of 0.205 for summer in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Venice in the summer is expected to be 0.205 units higher than in the spring, or a $e^{0.205} - 1 \approx 22.8\%$ increase in the price in Euros relative to spring. In a similar fashion, the coefficient of 0.248 for fall in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Venice in the fall is expected to be 0.248 units higher than in the spring, or a $e^{0.248} - 1 \approx 28.1\%$ increase in the price in Euros relative to spring. Conversely, the coefficient of -0.063 for winter in our model indicates that, while controlling for the other variables in our model, including the unique listing itself, the log price of a night at an Airbnb in Rome in the winter is expected to be 0.063 units lower than in the spring, or a $e^{-0.063} - 1 \approx -6.1\%$ decrease in the price in Euros relative to spring.
 
 # 4. Discussion
+
+From our research, it is evident that seasonal variations significantly influence Airbnb pricing across the major Italian cities examined, with each reflecting distinct local demand dynamics and tourist flows. In Florence, summer brings a noticeable increase in Airbnb prices, with a 12.4% rise compared to spring, which could likely be explained by heightened demand driven by peak tourist activity. Winter, on the other hand, sees a reduction in prices by approximately 11.8%, which may indicate a strategic lowering of rates to attract visitors during the off-peak season. Milan, which is known for it's dual appeal as both a tourist destination and a business hub, exhibits relatively more moderate seasonal price fluctuations. Prices increase by just 3.4% in the summer and decrease by a slight 2.1% during winter, when adjusting for the other variables in our model. This pattern may reflect Milan's less pronounced seasonal tourist changes and its steady year-round visitor rate. Naples shows similar trends to Milan, with a 2.5% increase in summer prices and a modest 1.6% decrease in winter; Naples' temperate climate and year-round attractions may play a role in tempering the seasonal variability observed in the other Italian cities. In contrast, Rome experiences significant pricing dynamics with a robust 14.7% increase in summer and a 13.0% increase in fall when accounting for the other variables of interest, which could be a symptom of its popularity during these peak periods for tourism. However, winter in Rome sees a substantial 13.2% drop in prices. One possible explanation is that this is an aggressive strategy to maintain occupancy during the city's less popular tourist months. Venice, of the five cities reviewed, presents the most dramatic shifts in seasonal pricing. The summer season sees a 22.8% price increase, and fall prices soar even higher by 28.1%. These sharp could be due to Venice's global appeal and significant tourist influx during cultural events. Despite these peaks, winter prices decrease by 6.1%, which, while less severe than the increases, still marks a notable adjustment from spring levels.
+
+Overall, these patterns illustrate a clear strategic adaptation of Airbnb pricing to seasonal tourism trends, with price increases during typically high-demand  and decreases during slower months. Understanding these pricing fluctuations could provide valuable insights for Airbnb hosts aiming to optimize their efficiency or for policymakers gauging the impact of tourism on local economies. Nevertheless, the current analysis, while insightful, encounters limitations primarily due to violations of heteroskedasticity and normality of errors assumptions. Such violations can compromise the reliability of standard error estimates, which in turn affects the test statistics for our coefficient estimates. Additionally, the complexity and localized nature of models for each city may inhibit the generalizability of findings. The analysis is also highly dependent on the accuracy and completeness of Airbnb data. Inaccuracies in listing data could skew results, and external factors like local events or broader economic conditions, which could significantly impact Airbnb pricing, were not incorporated.
+
+To enhance the robustness of findings, employing robust regression techniques could mitigate the influence of outliers and assumption violations. Exploring further transformations of skewed predictors or applying weights to observations may also address heteroskedasticity. Integrating a Bayesian approach could offer flexibility in handling assumptions and incorporating prior knowledge. Developing a unified model that includes interactions between city and other predictors might reveal broader, more generalizable patterns.
+
+Looking forward, future work could effectively explore interaction effects between seasonality and other variables such as room type or host status to uncover complex dynamics that influence pricing. Investigating how macro-economic factors like inflation rates or local economic conditions affect Airbnb pricing could yield insights into external influences on pricing trends not captured here. A longitudinal study spanning several years would be valuable in understanding long-term trends and responses to significant events or policy changes, and would increase the amount of data available for each listing, which is currently limited. Additionally, expanding the geographic scope of the analysis to include more diverse locations could help understand how different settings influence Airbnb pricing strategies. These directions not only aim to address current limitations but also enrich our understanding of the marketplace as a whole.
 
 \newpage
 
@@ -424,6 +442,8 @@ https://yihui.org/knitr/options/#chunk-options
 https://patchwork.data-imaginist.com/articles/guides/annotation.html
 
 https://www.st-andrews.ac.uk/media/ceed/students/mathssupport/mixedeffectsknir.pdf
+
+https://www.sciencedirect.com/science/article/pii/S0749596X07001398
 
 *Put citations here*
 
